@@ -263,7 +263,8 @@ input:disabled{opacity:0.4;cursor:not-allowed;}
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;" id="nf-modelos-check">
           <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;padding:6px 8px;border:1px solid var(--border);border-radius:6px;"><input type="checkbox" value="validacion"> Validación</label>
           <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;padding:6px 8px;border:1px solid var(--border);border-radius:6px;"><input type="checkbox" value="serial"> Serialización (BT)</label>
-          <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;padding:6px 8px;border:1px solid var(--border);border-radius:6px;"><input type="checkbox" value="m10"> M10</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;padding:6px 8px;border:1px solid var(--border);border-radius:6px;"><input type="checkbox" value="m10"> M10 (BT)</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;padding:6px 8px;border:1px solid var(--border);border-radius:6px;"><input type="checkbox" value="m10_mdc"> M10 (MDC)</label>
           <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;padding:6px 8px;border:1px solid var(--border);border-radius:6px;"><input type="checkbox" value="m2070"> M20/70 (BT)</label>
           <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;padding:6px 8px;border:1px solid var(--border);border-radius:6px;"><input type="checkbox" value="bancos_mdc"> Bancos MDC</label>
           <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;padding:6px 8px;border:1px solid var(--border);border-radius:6px;"><input type="checkbox" value="m20_mdc"> M20 MDC (Gross)</label>
@@ -771,89 +772,44 @@ function exportCSV(){
   showToast(k.unjust>0?`⚠ CSV exportado con ${k.unjust} desvío(s) sin justificar`:'✓ CSV exportado correctamente', k.unjust>0?'yellow':'green');
 }
 function downloadTemplate(){
-  const BT_MDC='BT'; // header reference
+  // Genera plantillas separadas BT y MDC con campos vacíos para completar
+  function templateRows(arquetipo){
+    const FLUJO=arquetipo==='BT'?'NOMBRE_FLUJO_BT':'NOMBRE_FLUJO_MDC';
+    const RESP='RESPONSABLE';
+    const modelos=arquetipo==='BT'?BT_MODELOS:MDC_MODELOS;
+    const rows=[];
+    modelos.forEach(key=>{
+      const nombre=MASTER_NOMBRES[key];
+      const acts=MASTER_ACTIVIDADES[key]||[];
+      rows.push(`# ── ${nombre.toUpperCase()} ──`);
+      acts.forEach(act=>{
+        rows.push(`"${FLUJO}","${arquetipo}","${RESP}","${nombre}","${act}","pending","YYYY-MM-DD","",""`);
+      });
+      rows.push('');
+    });
+    return rows;
+  }
   const rows=[
     'Flujo,Arquetipo,Responsable,Modelo,Actividad,Estado,ETA,Fecha Real,Justificación',
     '# ── INSTRUCCIONES ──────────────────────────────────────────────────────────────',
-    '# 1. Completá una fila por FLUJO: indicá Nombre, Arquetipo (BT o MDC) y Responsable',
-    '# 2. Estado: pending | wip | done',
-    '# 3. Fechas: formato YYYY-MM-DD',
-    '# 4. Borrá los modelos que NO aplican al flujo antes de importar',
+    '# 1. Reemplazá NOMBRE_FLUJO_BT / NOMBRE_FLUJO_MDC por el nombre real del flujo',
+    '# 2. Reemplazá RESPONSABLE por el analista asignado',
+    '# 3. Reemplazá YYYY-MM-DD por la fecha ETA real (ej: 2026-07-15)',
+    '# 4. Estado: pending | wip | done',
+    '# 5. Eliminá las secciones de modelos que no apliquen al flujo',
+    '# 6. Podés incluir varios flujos en el mismo archivo: repetí el bloque con otro nombre',
     '# ────────────────────────────────────────────────────────────────────────────────',
     '',
-    '# ── VALIDACIÓN ──',
-    '"E2E Mi Flujo CBT-BT","BT","Joaco","Validación","Validación de fuentes (Banco / Site / Liqui)","pending","2026-07-01","",""',
-    '"E2E Mi Flujo CBT-BT","BT","Joaco","Validación","Validación de cuentas (Con envío de mail de confirmación)","pending","2026-07-02","",""',
+    '# ════════════════════════════════════════════',
+    '# ARQUETIPO BT (Bank Transfer)',
+    '# ════════════════════════════════════════════',
     '',
-    '# ── SERIALIZACIÓN (solo BT) ──',
-    '"E2E Mi Flujo CBT-BT","BT","Joaco","Serialización","Pedido de lógicas V1","pending","2026-07-05","",""',
-    '"E2E Mi Flujo CBT-BT","BT","Joaco","Serialización","Conciliación de Integridad","pending","2026-07-06","",""',
-    '"E2E Mi Flujo CBT-BT","BT","Joaco","Serialización","Conciliación Bank","pending","2026-07-08","",""',
-    '"E2E Mi Flujo CBT-BT","BT","Joaco","Serialización","Conciliación Model","pending","2026-07-10","",""',
-    '"E2E Mi Flujo CBT-BT","BT","Joaco","Serialización","Traductor contable (Serialización)","pending","2026-07-12","",""',
-    '"E2E Mi Flujo CBT-BT","BT","Joaco","Serialización","Control manual (Serialización)","pending","2026-07-14","",""',
-    '"E2E Mi Flujo CBT-BT","BT","Joaco","Serialización","Sign-Off (SO) de Serialización","pending","2026-07-15","",""',
+    ...templateRows('BT'),
+    '# ════════════════════════════════════════════',
+    '# ARQUETIPO MDC',
+    '# ════════════════════════════════════════════',
     '',
-    '# ── M10 ──',
-    '"E2E Mi Flujo CBT-BT","BT","Joaco","M10","Validación de movimientos vs mp_source","pending","2026-07-18","",""',
-    '"E2E Mi Flujo CBT-BT","BT","Joaco","M10","Conciliación Dummy (M10)","pending","2026-07-19","",""',
-    '"E2E Mi Flujo CBT-BT","BT","Joaco","M10","Traductor contable (M10)","pending","2026-07-20","",""',
-    '"E2E Mi Flujo CBT-BT","BT","Joaco","M10","Control manual (M10)","pending","2026-07-21","",""',
-    '"E2E Mi Flujo CBT-BT","BT","Joaco","M10","Sign-Off (SO) de M10","pending","2026-07-22","",""',
-    '',
-    '# ── M20/70 (solo BT) ──',
-    '"E2E Mi Flujo CBT-BT","BT","Joaco","M20/70","Conciliación Dummy (M20/70)","pending","2026-07-25","",""',
-    '"E2E Mi Flujo CBT-BT","BT","Joaco","M20/70","Traductor contable (M20/70)","pending","2026-07-26","",""',
-    '"E2E Mi Flujo CBT-BT","BT","Joaco","M20/70","Control manual (M20/70)","pending","2026-07-28","",""',
-    '"E2E Mi Flujo CBT-BT","BT","Joaco","M20/70","Sign-Off (SO) de M20/70","pending","2026-07-30","",""',
-    '',
-    '# ── BANCOS MDC (solo MDC) ──',
-    '"E2E Mi Flujo MDC","MDC","Joaco","Bancos MDC","Integración banco manual","pending","2026-07-15","",""',
-    '"E2E Mi Flujo MDC","MDC","Joaco","Bancos MDC","Integración banco automático","pending","2026-07-18","",""',
-    '"E2E Mi Flujo MDC","MDC","Joaco","Bancos MDC","Parametría general de cuentas","pending","2026-07-20","",""',
-    '"E2E Mi Flujo MDC","MDC","Joaco","Bancos MDC","Conciliación 20_BANK_SOURCE","pending","2026-07-22","",""',
-    '"E2E Mi Flujo MDC","MDC","Joaco","Bancos MDC","Control manual de consistencia bancaria","pending","2026-07-24","",""',
-    '',
-    '# ── M20 MDC / GROSS (solo MDC) ──',
-    '"E2E Mi Flujo MDC","MDC","Joaco","M20 MDC","Conciliación Gross (Monto Bruto)","pending","2026-07-27","",""',
-    '"E2E Mi Flujo MDC","MDC","Joaco","M20 MDC","Conciliación Dummy (M20 Gross)","pending","2026-07-28","",""',
-    '"E2E Mi Flujo MDC","MDC","Joaco","M20 MDC","Traductor contable (M20 Gross)","pending","2026-07-29","",""',
-    '"E2E Mi Flujo MDC","MDC","Joaco","M20 MDC","Control manual (M20 Gross)","pending","2026-07-31","",""',
-    '"E2E Mi Flujo MDC","MDC","Joaco","M20 MDC","Sign-Off (SO) de M20 Gross","pending","2026-08-01","",""',
-    '',
-    '# ── M50 ──',
-    '"E2E Mi Flujo CBT-BT","BT","Joaco","M50","Carga de ajustes en template (M50)","pending","2026-08-03","",""',
-    '"E2E Mi Flujo CBT-BT","BT","Joaco","M50","Transformadas en dummy (M50)","pending","2026-08-04","",""',
-    '"E2E Mi Flujo CBT-BT","BT","Joaco","M50","Configuración ZFI (M50)","pending","2026-08-06","",""',
-    '"E2E Mi Flujo CBT-BT","BT","Joaco","M50","Traductor contable (M50)","pending","2026-08-07","",""',
-    '"E2E Mi Flujo CBT-BT","BT","Joaco","M50","Control manual (M50)","pending","2026-08-09","",""',
-    '"E2E Mi Flujo CBT-BT","BT","Joaco","M50","Sign-Off (SO) de M50","pending","2026-08-10","",""',
-    '',
-    '# ── COSTS TCH (solo MDC) ──',
-    '"E2E Mi Flujo MDC","MDC","Joaco","Costs TCH","Configuración de PS_reprocesos (TCH)","pending","2026-08-12","",""',
-    '"E2E Mi Flujo MDC","MDC","Joaco","Costs TCH","Configuración de PS_liqmoana (TCH)","pending","2026-08-14","",""',
-    '"E2E Mi Flujo MDC","MDC","Joaco","Costs TCH","Configuración de hash_id (TCH)","pending","2026-08-15","",""',
-    '"E2E Mi Flujo MDC","MDC","Joaco","Costs TCH","Mapeo de Moana_site y Liq_moana (TCH)","pending","2026-08-17","",""',
-    '"E2E Mi Flujo MDC","MDC","Joaco","Costs TCH","Configuración del motor de Reprocesos (TCH)","pending","2026-08-19","",""',
-    '"E2E Mi Flujo MDC","MDC","Joaco","Costs TCH","AG Control de costos (Validación de tasas)","pending","2026-08-21","",""',
-    '"E2E Mi Flujo MDC","MDC","Joaco","Costs TCH","AG Control de plazos (Liquidación)","pending","2026-08-22","",""',
-    '',
-    '# ── COSTS CALC (solo MDC) ──',
-    '"E2E Mi Flujo MDC","MDC","Joaco","Costs Calc","Parametría general de tasas y comisiones (COST_CALC)","pending","2026-08-12","",""',
-    '"E2E Mi Flujo MDC","MDC","Joaco","Costs Calc","Conciliación cost_calc","pending","2026-08-15","",""',
-    '',
-    '# ── TABLEROS ──',
-    '"E2E Mi Flujo CBT-BT","BT","Joaco","Tableros","Pedido de export de modelos y armado de templates (B&A)","pending","2026-08-24","",""',
-    '"E2E Mi Flujo CBT-BT","BT","Joaco","Tableros","Reunión de KO (Kick-Off) con el equipo de B&A","pending","2026-08-26","",""',
-    '"E2E Mi Flujo CBT-BT","BT","Joaco","Tableros","Sign-Off (SO) del Tablero final por B&A","pending","2026-08-28","",""',
-    '',
-    '# ── ENCENDIDO ──',
-    '"E2E Mi Flujo CBT-BT","BT","Joaco","Encendido","Validación de fuentes","pending","2026-09-02","",""',
-    '"E2E Mi Flujo CBT-BT","BT","Joaco","Encendido","Encendido de TC","pending","2026-09-03","",""',
-    '"E2E Mi Flujo CBT-BT","BT","Joaco","Encendido","Estabilización","pending","2026-09-04","",""',
-    '"E2E Mi Flujo CBT-BT","BT","Joaco","Encendido","Traspaso","pending","2026-09-04","",""',
-    '"E2E Mi Flujo CBT-BT","BT","Joaco","Encendido","Mail de traspaso","pending","2026-09-05","",""',
-    '"E2E Mi Flujo CBT-BT","BT","Joaco","Encendido","OK mail de traspaso","pending","2026-09-05","",""',
+    ...templateRows('MDC'),
   ];
   const blob=new Blob([rows.join('\n')],{type:'text/csv;charset=utf-8'});
   const url=URL.createObjectURL(blob);
@@ -1056,6 +1012,7 @@ const MASTER_ACTIVIDADES={
   validacion:['Validación de fuentes (Banco / Site / Liqui)','Validación de cuentas (Con envío de mail de confirmación)'],
   serial:['Pedido de lógicas V1','Conciliación de Integridad','Conciliación Bank','Conciliación Model','Traductor contable (Serialización)','Control manual (Serialización)','Sign-Off (SO) de Serialización'],
   m10:['Validación de movimientos vs mp_source','Conciliación Dummy (M10)','Traductor contable (M10)','Control manual (M10)','Sign-Off (SO) de M10'],
+  m10_mdc:['Validación de movimientos vs mp_source','Control manual (M10)','Sign-Off (SO) de M10'],
   m2070:['Conciliación Dummy (M20/70)','Traductor contable (M20/70)','Control manual (M20/70)','Sign-Off (SO) de M20/70'],
   bancos_mdc:['Integración banco manual','Integración banco automático','Parametría general de cuentas','Conciliación 20_BANK_SOURCE','Control manual de consistencia bancaria'],
   m20_mdc:['Conciliación Gross (Monto Bruto)','Conciliación Dummy (M20 Gross)','Traductor contable (M20 Gross)','Control manual (M20 Gross)','Sign-Off (SO) de M20 Gross'],
@@ -1065,9 +1022,9 @@ const MASTER_ACTIVIDADES={
   tableros:['Pedido de export de modelos y armado de templates (B&A)','Reunión de KO (Kick-Off) con el equipo de B&A','Sign-Off (SO) del Tablero final por B&A'],
   encendido:['Validación de fuentes','Encendido de TC','Estabilización','Traspaso','Mail de traspaso','OK mail de traspaso'],
 };
-const MASTER_NOMBRES={validacion:'Validación',serial:'Serialización',m10:'M10',m2070:'M20/70',bancos_mdc:'Bancos MDC',m20_mdc:'M20 MDC',m50:'M50',costs_tch:'Costs TCH',costs_calc:'Costs Calc',tableros:'Tableros',encendido:'Encendido'};
+const MASTER_NOMBRES={validacion:'Validación',serial:'Serialización',m10:'M10',m10_mdc:'M10',m2070:'M20/70',bancos_mdc:'Bancos MDC',m20_mdc:'M20 MDC',m50:'M50',costs_tch:'Costs TCH',costs_calc:'Costs Calc',tableros:'Tableros',encendido:'Encendido'};
 const BT_MODELOS=['validacion','serial','m10','m2070','m50','tableros','encendido'];
-const MDC_MODELOS=['validacion','bancos_mdc','m20_mdc','m50','costs_tch','costs_calc','tableros','encendido'];
+const MDC_MODELOS=['validacion','bancos_mdc','m10_mdc','m20_mdc','m50','costs_tch','costs_calc','tableros','encendido'];
 
 function preseleccionarModelos(arquetipo){
   const checks=document.querySelectorAll('#nf-modelos-check input[type=checkbox]');
