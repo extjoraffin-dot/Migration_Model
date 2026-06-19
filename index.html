@@ -1,0 +1,1139 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Migrations Guard AI</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+:root{
+  --bg-deep:#090d16;--bg-card:#111827;--bg-card2:#0f1623;
+  --border:#1f2937;--border-light:#2d3748;
+  --green:#10b981;--green-bg:rgba(16,185,129,0.1);
+  --red:#ef4444;--red-bg:rgba(239,68,68,0.1);
+  --yellow:#f59e0b;--yellow-bg:rgba(245,158,11,0.1);
+  --blue:#3b82f6;--blue-bg:rgba(59,130,246,0.1);
+  --purple:#8b5cf6;--purple-bg:rgba(139,92,246,0.1);
+  --text:#f1f5f9;--text-muted:#64748b;--text-dim:#94a3b8;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg-deep);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh;}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:var(--bg-deep);}
+::-webkit-scrollbar-thumb{background:var(--border-light);border-radius:3px;}
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;}
+.badge-green{background:var(--green-bg);color:var(--green);border:1px solid rgba(16,185,129,0.2);}
+.badge-red{background:var(--red-bg);color:var(--red);border:1px solid rgba(239,68,68,0.2);}
+.badge-yellow{background:var(--yellow-bg);color:var(--yellow);border:1px solid rgba(245,158,11,0.2);}
+.badge-blue{background:var(--blue-bg);color:var(--blue);border:1px solid rgba(59,130,246,0.2);}
+.badge-gray{background:rgba(100,116,139,0.1);color:var(--text-dim);border:1px solid rgba(100,116,139,0.2);}
+.badge-purple{background:var(--purple-bg);color:var(--purple);border:1px solid rgba(139,92,246,0.2);}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;border:1px solid;transition:all 0.15s;}
+.btn-green{background:var(--green-bg);color:var(--green);border-color:rgba(16,185,129,0.3);}
+.btn-green:hover{background:rgba(16,185,129,0.2);}
+.btn-red{background:var(--red-bg);color:var(--red);border-color:rgba(239,68,68,0.3);}
+.btn-blue{background:var(--blue-bg);color:var(--blue);border-color:rgba(59,130,246,0.3);}
+.btn-blue:hover{background:rgba(59,130,246,0.2);}
+.btn-ghost{background:transparent;color:var(--text-dim);border-color:var(--border);}
+.btn-ghost:hover{background:var(--border);color:var(--text);}
+.btn-purple{background:var(--purple-bg);color:var(--purple);border-color:rgba(139,92,246,0.3);}
+.btn-purple:hover{background:rgba(139,92,246,0.2);}
+input,textarea,select{background:var(--bg-deep);border:1px solid var(--border-light);border-radius:8px;color:var(--text);font-size:13px;padding:6px 10px;outline:none;transition:border-color 0.15s;width:100%;font-family:inherit;}
+input:focus,textarea:focus,select:focus{border-color:var(--green);}
+input:disabled{opacity:0.4;cursor:not-allowed;}
+.progress-bar{height:4px;background:var(--border);border-radius:2px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:2px;transition:width 0.4s;}
+.row-flujo{cursor:pointer;transition:background 0.15s;}
+.row-flujo:hover{background:rgba(255,255,255,0.02);}
+.row-flujo.selected{background:rgba(16,185,129,0.04);border-left:2px solid var(--green);}
+.row-modelo{cursor:pointer;transition:background 0.15s;}
+.row-modelo:hover{background:rgba(59,130,246,0.04);}
+.row-modelo.selected{background:rgba(59,130,246,0.06);border-left:2px solid var(--blue);}
+.deviate-red{color:var(--red);font-weight:600;}
+.deviate-green{color:var(--green);font-weight:600;}
+.justify-required{border:1px solid var(--red)!important;}
+/* Chat flotante */
+#chat-fab{position:fixed;bottom:24px;right:24px;z-index:100;width:52px;height:52px;border-radius:50%;background:var(--green);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(16,185,129,0.4);transition:all 0.2s;}
+#chat-fab:hover{transform:scale(1.08);}
+#chat-panel{position:fixed;bottom:90px;right:24px;z-index:99;width:360px;height:520px;border-radius:16px;background:var(--bg-card);border:1px solid var(--border-light);display:none;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,0.5);overflow:hidden;}
+#chat-panel.open{display:flex;}
+.chat-msg{padding:10px 14px;border-radius:10px;font-size:13px;line-height:1.5;max-width:85%;}
+.chat-msg.user{background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.2);margin-left:auto;color:#93c5fd;}
+.chat-msg.bot{background:var(--bg-deep);border:1px solid var(--border);color:var(--text-dim);}
+.pill-chip{display:inline-block;padding:3px 10px;border-radius:99px;font-size:11px;cursor:pointer;border:1px solid var(--border-light);color:var(--text-dim);transition:all 0.15s;white-space:nowrap;}
+.pill-chip:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-bg);}
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;display:none;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal-box{background:var(--bg-card);border:1px solid var(--border-light);border-radius:16px;padding:24px;width:480px;max-height:80vh;overflow-y:auto;}
+.tab-btn{padding:6px 14px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;border:none;background:transparent;color:var(--text-muted);transition:all 0.15s;}
+.tab-btn.active{background:var(--green-bg);color:var(--green);}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header style="border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:rgba(9,13,22,0.95);z-index:40;backdrop-filter:blur(8px);">
+  <div style="display:flex;align-items:center;gap:12px;">
+    <div style="width:32px;height:32px;border-radius:8px;background:var(--green-bg);border:1px solid rgba(16,185,129,0.3);display:flex;align-items:center;justify-content:center;">
+      <i class="fa-solid fa-shield-halved" style="color:var(--green);font-size:14px;"></i>
+    </div>
+    <div>
+      <div style="font-size:15px;font-weight:700;letter-spacing:-0.02em;">Migrations Guard <span style="color:var(--green);">AI</span></div>
+      <div style="font-size:11px;color:var(--text-muted);">Simetrik V1 → V2 · Conciliation Audit</div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <div id="alert-dot" style="display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:8px;background:var(--red-bg);border:1px solid rgba(239,68,68,0.2);font-size:12px;color:var(--red);">
+      <i class="fa-solid fa-triangle-exclamation" style="font-size:11px;"></i>
+      <span id="alert-count">—</span>
+    </div>
+    <button class="btn btn-ghost" onclick="document.getElementById('csv-upload').click()"><i class="fa-solid fa-file-import"></i> Importar CSV</button>
+    <input type="file" id="csv-upload" accept=".csv" style="display:none" onchange="importCSV(this)">
+    <button class="btn btn-ghost" onclick="downloadTemplate()"><i class="fa-solid fa-file-arrow-down"></i> Plantilla</button>
+    <button class="btn btn-green" onclick="exportCSV()"><i class="fa-solid fa-file-export"></i> Exportar CSV</button>
+    <select id="filtro-analista" onchange="renderAll()" style="width:auto;padding:6px 12px;font-size:13px;border-radius:8px;cursor:pointer;">
+      <option value="">👤 Todos los analistas</option>
+    </select>
+    <button class="btn btn-purple" onclick="openNewFlujoModal()"><i class="fa-solid fa-plus"></i> Nuevo Flujo</button>
+  </div>
+</header>
+
+<!-- MAIN -->
+<div style="padding:20px 24px;max-width:1400px;margin:0 auto;">
+
+  <!-- KPI STRIP -->
+  <div id="kpi-strip" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;"></div>
+
+  <!-- FLUJOS EN PROCESO -->
+  <div class="card" style="margin-bottom:16px;" id="card-en-proceso">
+    <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="width:8px;height:8px;border-radius:50%;background:var(--blue);display:inline-block;"></span>
+          <div style="font-size:14px;font-weight:600;">Flujos en Proceso</div>
+          <span id="badge-en-proceso" class="badge badge-blue" style="font-size:10px;"></span>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">Clic para ver modelos del flujo</div>
+      </div>
+      <div style="display:flex;gap:6px;">
+        <button class="tab-btn active" onclick="filterFlujos('all',this)">Todos</button>
+        <button class="tab-btn" onclick="filterFlujos('delayed',this)">Con desvío</button>
+      </div>
+    </div>
+    <div style="overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;">
+        <thead>
+          <tr style="border-bottom:1px solid var(--border);">
+            <th style="text-align:left;padding:10px 18px;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;">Flujo</th>
+            <th style="text-align:center;padding:10px 10px;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;">Avance</th>
+            <th style="text-align:center;padding:10px 10px;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;">Modelos</th>
+            <th style="text-align:center;padding:10px 10px;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;">Desvío Prom.</th>
+            <th style="text-align:center;padding:10px 10px;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;">Estado</th>
+            <th style="text-align:center;padding:10px 10px;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;">Sign-Off</th>
+            <th style="padding:10px 12px;"></th>
+          </tr>
+        </thead>
+        <tbody id="flujos-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- FLUJOS COMPLETADOS -->
+  <div class="card" style="margin-bottom:16px;border:1px solid rgba(16,185,129,0.2);">
+    <div style="padding:12px 18px;border-bottom:1px solid rgba(16,185,129,0.1);display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="toggleCompletados()">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block;"></span>
+        <div style="font-size:14px;font-weight:600;">Flujos Completados</div>
+        <span id="badge-completados" class="badge badge-green" style="font-size:10px;"></span>
+      </div>
+      <i id="completados-chevron" class="fa-solid fa-chevron-down" style="color:var(--text-muted);font-size:12px;transition:transform 0.2s;"></i>
+    </div>
+    <div id="completados-panel" style="display:none;overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;">
+        <thead>
+          <tr style="border-bottom:1px solid var(--border);">
+            <th style="text-align:left;padding:10px 18px;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;">Flujo</th>
+            <th style="text-align:center;padding:10px 10px;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;">Modelos</th>
+            <th style="text-align:center;padding:10px 10px;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;">Desvío Final</th>
+            <th style="text-align:center;padding:10px 10px;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;">Encendido</th>
+            <th style="text-align:center;padding:10px 10px;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;">Sign-Off</th>
+            <th style="padding:10px 12px;"></th>
+          </tr>
+        </thead>
+        <tbody id="completados-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- NIVEL 2+3 se renderizan inline como acordeón dentro de cada tabla -->
+
+  <!-- ALERT LOG -->
+  <div class="card" style="margin-top:16px;">
+    <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+      <div style="font-size:14px;font-weight:600;"><i class="fa-solid fa-tower-broadcast" style="color:var(--yellow);margin-right:8px;"></i>Log de Alertas Simuladas</div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-ghost" onclick="fireAlert('slack')"><i class="fa-brands fa-slack"></i> Simular Slack</button>
+        <button class="btn btn-ghost" onclick="fireAlert('email')"><i class="fa-solid fa-envelope"></i> Simular Mail</button>
+      </div>
+    </div>
+    <div id="alert-log" style="padding:14px 18px;display:flex;flex-direction:column;gap:8px;max-height:180px;overflow-y:auto;">
+      <div style="font-size:12px;color:var(--text-muted);text-align:center;padding:16px 0;">Sin alertas disparadas aún.</div>
+    </div>
+  </div>
+</div>
+
+<!-- CHAT FAB -->
+<button id="chat-fab" onclick="toggleChat()" title="Agente IA">
+  <i class="fa-solid fa-robot" style="color:white;font-size:18px;"></i>
+</button>
+<div id="unread-dot" style="position:fixed;bottom:64px;right:24px;z-index:101;width:10px;height:10px;border-radius:50%;background:var(--red);display:none;border:2px solid var(--bg-deep);"></div>
+
+<!-- CHAT PANEL -->
+<div id="chat-panel">
+  <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div style="width:28px;height:28px;border-radius:50%;background:var(--green-bg);border:1px solid rgba(16,185,129,0.3);display:flex;align-items:center;justify-content:center;">
+        <i class="fa-solid fa-robot" style="color:var(--green);font-size:12px;"></i>
+      </div>
+      <div>
+        <div style="font-size:13px;font-weight:600;">Agente IA</div>
+        <div style="font-size:10px;color:var(--green);display:flex;align-items:center;gap:3px;">
+          <span style="width:5px;height:5px;border-radius:50%;background:var(--green);display:inline-block;"></span> Online
+        </div>
+      </div>
+    </div>
+    <button onclick="toggleChat()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div id="chat-messages" style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;"></div>
+  <div style="padding:8px 12px;border-top:1px solid var(--border);display:flex;flex-wrap:wrap;gap:5px;">
+    <span class="pill-chip" onclick="setChat('Completé hoy el paso Modelo 10 de Alipay, se demoró 2 días por descuadre de saldos')">✅ Completar Modelo 10 Alipay</span>
+    <span class="pill-chip" onclick="setChat('El paso Validación de Fuentes de Pix está en proceso desde hoy')">🔄 Iniciar Fuentes Pix</span>
+    <span class="pill-chip" onclick="setChat('¿Qué pasos tienen desvío sin justificar?')">🔍 Ver desvíos</span>
+    <span class="pill-chip" onclick="setChat('Quiero dar de alta un nuevo flujo llamado Mercado Pago con modelos 10, 20 y 50, fecha de encendido 15/08/2026')">➕ Nuevo flujo por chat</span>
+  </div>
+  <div style="padding:10px 12px;border-top:1px solid var(--border);display:flex;gap:8px;">
+    <textarea id="chat-input" rows="2" placeholder="Actualizá un paso o creá un flujo en lenguaje natural..." style="flex:1;resize:none;font-size:12px;"></textarea>
+    <button class="btn btn-green" style="align-self:flex-end;padding:6px 10px;" onclick="sendChat()"><i class="fa-solid fa-paper-plane"></i></button>
+  </div>
+</div>
+
+<!-- MODAL NUEVO FLUJO -->
+<div class="modal-overlay" id="modal-nuevo-flujo">
+  <div class="modal-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <div style="font-size:16px;font-weight:700;">Nuevo Flujo E2E</div>
+      <button onclick="closeModal()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:18px;"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <div>
+        <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:4px;">Nombre del Flujo *</label>
+        <input id="nf-nombre" placeholder="Ej: E2E Davivienda CBT-BT">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+        <div>
+          <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:4px;">Arquetipo *</label>
+          <select id="nf-arquetipo" onchange="preseleccionarModelos(this.value)">
+            <option value="">Elegir...</option>
+            <option value="BT">Bank Transfer (BT)</option>
+            <option value="MDC">MDC</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:4px;">Fecha de Encendido *</label>
+          <input type="date" id="nf-encendido">
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:4px;">Responsable *</label>
+          <select id="nf-responsable">
+            <option value="—">Sin asignar</option>
+            <option value="Joaco">Joaco</option>
+            <option value="Sofi">Sofi</option>
+            <option value="Matías">Matías</option>
+            <option value="Lucía">Lucía</option>
+            <option value="Marcos">Marcos</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:8px;">Modelos a incluir <span style="color:var(--text-muted);font-weight:400;">(se preseleccionan según arquetipo)</span></label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;" id="nf-modelos-check">
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;padding:6px 8px;border:1px solid var(--border);border-radius:6px;"><input type="checkbox" value="validacion"> Validación</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;padding:6px 8px;border:1px solid var(--border);border-radius:6px;"><input type="checkbox" value="serial"> Serialización (BT)</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;padding:6px 8px;border:1px solid var(--border);border-radius:6px;"><input type="checkbox" value="m10"> M10</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;padding:6px 8px;border:1px solid var(--border);border-radius:6px;"><input type="checkbox" value="m2070"> M20/70 (BT)</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;padding:6px 8px;border:1px solid var(--border);border-radius:6px;"><input type="checkbox" value="bancos_mdc"> Bancos MDC</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;padding:6px 8px;border:1px solid var(--border);border-radius:6px;"><input type="checkbox" value="m20_mdc"> M20 MDC (Gross)</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;padding:6px 8px;border:1px solid var(--border);border-radius:6px;"><input type="checkbox" value="m50"> M50</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;padding:6px 8px;border:1px solid var(--border);border-radius:6px;"><input type="checkbox" value="costs_tch"> Costs TCH</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;padding:6px 8px;border:1px solid var(--border);border-radius:6px;"><input type="checkbox" value="costs_calc"> Costs Calc</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;padding:6px 8px;border:1px solid var(--border);border-radius:6px;"><input type="checkbox" value="tableros"> Tableros</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;padding:6px 8px;border:1px solid var(--border);border-radius:6px;"><input type="checkbox" value="encendido"> Encendido</label>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:6px;">
+        <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+        <button class="btn btn-purple" onclick="crearFlujo()"><i class="fa-solid fa-plus"></i> Crear Flujo</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const today=new Date();
+function fmt(d){if(!d)return'—';const dt=typeof d==='string'?new Date(d+'T12:00:00'):d;return dt.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'2-digit'});}
+function daysDiff(a,b){if(!a||!b)return null;return Math.round((new Date(b+'T12:00:00')-new Date(a+'T12:00:00'))/(1000*60*60*24));}
+function todayStr(){return today.toISOString().split('T')[0];}
+function pastDate(n){const d=new Date(today);d.setDate(d.getDate()-n);return d.toISOString().split('T')[0];}
+function futureDate(n){const d=new Date(today);d.setDate(d.getDate()+n);return d.toISOString().split('T')[0];}
+
+const ANALISTAS=['Joaco','Sofi','Matías','Lucía','Marcos','—'];
+const ANALISTA_COLORS={'Joaco':'var(--blue)','Sofi':'var(--purple)','Matías':'var(--green)','Lucía':'var(--yellow)','Marcos':'var(--red)','—':'var(--text-muted)'};
+const ANALISTA_BG={'Joaco':'var(--blue-bg)','Sofi':'var(--purple-bg)','Matías':'var(--green-bg)','Lucía':'var(--yellow-bg)','Marcos':'var(--red-bg)','—':'rgba(100,116,139,0.1)'};
+
+// ESTRUCTURA: flujos -> modelos -> actividades
+let flujos=[
+  {
+    id:'alipay',name:'E2E Alipay CBT-BT',icon:'fa-building-columns',encendido:'2026-09-05',responsable:'Joaco',
+    modelos:[
+      {id:'alipay-validacion',name:'Validación',
+        actividades:[
+          {id:'av-1',name:'Validación de fuentes (Banco / Site / Liqui)',status:'done',eta:'2026-06-01',done:'2026-06-01',justify:'',responsable:'Joaco'},
+          {id:'av-2',name:'Validación de cuentas (Con envío de mail de confirmación)',status:'done',eta:'2026-06-03',done:'2026-06-03',justify:'',responsable:'Joaco'},
+        ]
+      },
+      {id:'alipay-serial',name:'Serialización',
+        actividades:[
+          {id:'as-1',name:'Pedido de lógicas V1',status:'done',eta:'2026-06-05',done:'2026-06-05',justify:'',responsable:'Joaco'},
+          {id:'as-2',name:'Conciliación de Integridad',status:'done',eta:'2026-06-08',done:'2026-06-12',justify:'Demora en provisión de datos crudos por parte de soporte técnico.',responsable:'Joaco'},
+          {id:'as-3',name:'Conciliación Bank',status:'done',eta:'2026-06-10',done:'2026-06-13',justify:'Descuadre inicial en saldo inicial de extracto bancario.',responsable:'Joaco'},
+          {id:'as-4',name:'Conciliación Model',status:'wip',eta:'2026-06-15',done:null,justify:'',responsable:'Joaco'},
+          {id:'as-5',name:'Traductor contable (Serialización)',status:'pending',eta:'2026-06-20',done:null,justify:'',responsable:'Joaco'},
+          {id:'as-6',name:'Control manual (Serialización)',status:'pending',eta:'2026-06-22',done:null,justify:'',responsable:'Joaco'},
+          {id:'as-7',name:'Sign-Off (SO) de Serialización',status:'pending',eta:'2026-06-25',done:null,justify:'',responsable:'Joaco'},
+        ]
+      },
+      {id:'alipay-m10',name:'M10',
+        actividades:[
+          {id:'am10-1',name:'Validación de movimientos vs mp_source',status:'pending',eta:'2026-07-18',done:null,justify:'',responsable:'Joaco'},
+          {id:'am10-2',name:'Conciliación Dummy (M10)',status:'pending',eta:'2026-07-19',done:null,justify:'',responsable:'Joaco'},
+          {id:'am10-3',name:'Traductor contable (M10)',status:'pending',eta:'2026-07-20',done:null,justify:'',responsable:'Joaco'},
+          {id:'am10-4',name:'Control manual (M10)',status:'pending',eta:'2026-07-21',done:null,justify:'',responsable:'Joaco'},
+          {id:'am10-5',name:'Sign-Off (SO) de M10',status:'pending',eta:'2026-07-22',done:null,justify:'',responsable:'Joaco'},
+        ]
+      },
+      {id:'alipay-m2070',name:'M20/70',
+        actividades:[
+          {id:'am20-1',name:'Conciliación Dummy (M20/70)',status:'pending',eta:'2026-07-25',done:null,justify:'',responsable:'Joaco'},
+          {id:'am20-2',name:'Traductor contable (M20/70)',status:'pending',eta:'2026-07-26',done:null,justify:'',responsable:'Joaco'},
+          {id:'am20-3',name:'Control manual (M20/70)',status:'pending',eta:'2026-07-28',done:null,justify:'',responsable:'Joaco'},
+          {id:'am20-4',name:'Sign-Off (SO) de M20/70',status:'pending',eta:'2026-07-30',done:null,justify:'',responsable:'Joaco'},
+        ]
+      },
+      {id:'alipay-m50',name:'M50',
+        actividades:[
+          {id:'am50-1',name:'Carga de ajustes en template (M50)',status:'pending',eta:'2026-08-03',done:null,justify:'',responsable:'Joaco'},
+          {id:'am50-2',name:'Transformadas en dummy (M50)',status:'pending',eta:'2026-08-04',done:null,justify:'',responsable:'Joaco'},
+          {id:'am50-3',name:'Configuración ZFI (M50)',status:'pending',eta:'2026-08-06',done:null,justify:'',responsable:'Joaco'},
+          {id:'am50-4',name:'Traductor contable (M50)',status:'pending',eta:'2026-08-07',done:null,justify:'',responsable:'Joaco'},
+          {id:'am50-5',name:'Control manual (M50)',status:'pending',eta:'2026-08-09',done:null,justify:'',responsable:'Joaco'},
+          {id:'am50-6',name:'Sign-Off (SO) de M50',status:'pending',eta:'2026-08-10',done:null,justify:'',responsable:'Joaco'},
+        ]
+      },
+      {id:'alipay-tableros',name:'Tableros',
+        actividades:[
+          {id:'atb-1',name:'Pedido de export de modelos y armado de templates (B&A)',status:'pending',eta:'2026-08-24',done:null,justify:'',responsable:'Joaco'},
+          {id:'atb-2',name:'Reunión de KO (Kick-Off) con el equipo de B&A',status:'pending',eta:'2026-08-26',done:null,justify:'',responsable:'Joaco'},
+          {id:'atb-3',name:'Sign-Off (SO) del Tablero final por B&A',status:'pending',eta:'2026-08-28',done:null,justify:'',responsable:'Joaco'},
+        ]
+      },
+      {id:'alipay-encendido',name:'Encendido',
+        actividades:[
+          {id:'aen-1',name:'Validación de fuentes',status:'pending',eta:'2026-09-02',done:null,justify:'',responsable:'Joaco'},
+          {id:'aen-2',name:'Encendido de TC',status:'pending',eta:'2026-09-03',done:null,justify:'',responsable:'Joaco'},
+          {id:'aen-3',name:'Estabilización',status:'pending',eta:'2026-09-04',done:null,justify:'',responsable:'Joaco'},
+          {id:'aen-4',name:'Traspaso',status:'pending',eta:'2026-09-04',done:null,justify:'',responsable:'Joaco'},
+          {id:'aen-5',name:'Mail de traspaso',status:'pending',eta:'2026-09-05',done:null,justify:'',responsable:'Joaco'},
+          {id:'aen-6',name:'OK mail de traspaso',status:'pending',eta:'2026-09-05',done:null,justify:'',responsable:'Joaco'},
+        ]
+      },
+    ]
+  }
+]
+let selectedFlujo=null, selectedModelo=null, filterMode='all';
+
+// HELPERS
+function getDeviation(act){
+  if(act.status==='done'&&act.done&&act.eta) return daysDiff(act.eta,act.done);
+  if(act.status==='wip'&&act.eta){ const d=daysDiff(act.eta,todayStr()); return d>0?d:null; }
+  return null;
+}
+function modeloStats(modelo){
+  const acts=modelo.actividades;
+  const total=acts.length, done=acts.filter(a=>a.status==='done').length;
+  const pct=Math.round(done/total*100);
+  const devs=acts.map(a=>getDeviation(a)).filter(d=>d!==null&&d>0);
+  const avgDev=devs.length?Math.round(devs.reduce((a,b)=>a+b,0)/devs.length):0;
+  const unjust=acts.filter(a=>{const d=getDeviation(a);return d!==null&&d>0&&(!a.justify||a.justify.length<10);}).length;
+  return{total,done,pct,avgDev,unjust};
+}
+function flujoStats(flujo){
+  let total=0,done=0,totalDev=0,devCount=0,unjust=0;
+  flujo.modelos.forEach(m=>{
+    const s=modeloStats(m);
+    total+=s.total;done+=s.done;unjust+=s.unjust;
+    m.actividades.forEach(a=>{const d=getDeviation(a);if(d!==null&&d>0){totalDev+=d;devCount++;}});
+  });
+  const pct=Math.round(done/total*100);
+  const avgDev=devCount?Math.round(totalDev/devCount):0;
+  const hasSignOff=flujo.modelos.some(m=>m.name.toLowerCase().includes('sign')&&modeloStats(m).pct===100);
+  return{total,done,pct,avgDev,unjust,hasSignOff};
+}
+function globalKPIs(){
+  let totalActs=0,doneActs=0,totalDev=0,devCount=0,unjust=0;
+  flujos.forEach(f=>{
+    const s=flujoStats(f);totalActs+=s.total;doneActs+=s.done;unjust+=s.unjust;
+    f.modelos.forEach(m=>m.actividades.forEach(a=>{const d=getDeviation(a);if(d!==null&&d>0){totalDev+=d;devCount++;}}));
+  });
+  const nextEnc=flujos.filter(f=>new Date(f.encendido+'T12:00:00')>=today).sort((a,b)=>new Date(a.encendido)-new Date(b.encendido)).slice(0,3);
+  return{pct:Math.round(doneActs/totalActs*100),avgDev:devCount?Math.round(totalDev/devCount):0,unjust,flujos:flujos.length,nextEnc};
+}
+
+// RENDER KPIs
+function renderKPIs(){
+  const k=globalKPIs();
+  const enProceso=flujos.filter(f=>{const s=flujoStats(f);return s.pct>0&&s.pct<100;});
+  const completados=flujos.filter(f=>flujoStats(f).pct===100);
+  const encStr=k.nextEnc.length?k.nextEnc.map(f=>`<span style="font-size:11px;color:var(--text-dim);">${fmt(f.encendido)} <b style="color:var(--text);font-weight:500;">${f.name.replace('E2E ','')}</b></span>`).join('<br>'):'<span style="font-size:11px;color:var(--green);">Sin próximos encendidos</span>';
+  // Flujos en proceso pill list
+  const enProcesoStr=enProceso.length?enProceso.map(f=>{
+    const s=flujoStats(f);
+    return `<div style="display:flex;align-items:center;justify-content:space-between;margin-top:5px;">
+      <span style="font-size:11px;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px;">${f.name.replace('E2E ','')}</span>
+      <span style="font-size:11px;font-weight:600;color:var(--blue);margin-left:6px;">${s.pct}%</span>
+    </div>`;}).join(''):'<span style="font-size:11px;color:var(--text-muted);">Sin flujos activos</span>';
+
+  document.getElementById('kpi-strip').innerHTML=`
+    <div class="card" style="padding:14px 16px;">
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em;">Avance Global</div>
+      <div style="font-size:28px;font-weight:700;color:var(--green);">${k.pct}%</div>
+      <div class="progress-bar" style="margin-top:8px;"><div class="progress-fill" style="width:${k.pct}%;background:var(--green);"></div></div>
+      <div style="display:flex;justify-content:space-between;margin-top:8px;">
+        <span style="font-size:11px;color:var(--text-muted);">${completados.length} completado${completados.length!==1?'s':''}</span>
+        <span style="font-size:11px;color:var(--blue);">${enProceso.length} en curso</span>
+      </div>
+    </div>
+    <div class="card" style="padding:14px 16px;">
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:2px;text-transform:uppercase;letter-spacing:.05em;">Flujos en Proceso</div>
+      <div style="font-size:28px;font-weight:700;color:var(--blue);">${enProceso.length}</div>
+      ${enProcesoStr}
+    </div>
+    <div class="card" style="padding:14px 16px;">
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em;">Próximos Encendidos</div>
+      <div style="display:flex;flex-direction:column;gap:3px;margin-top:4px;">${encStr}</div>
+    </div>
+    <div class="card" style="padding:14px 16px;border:1px solid ${k.unjust>0?'rgba(239,68,68,0.25)':'var(--border)'};">
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em;">Alertas</div>
+      ${k.unjust>0
+        ?`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+            <i class="fa-solid fa-triangle-exclamation" style="color:var(--yellow);font-size:13px;"></i>
+            <span style="font-size:13px;font-weight:600;color:var(--yellow);">${k.unjust} sin justificar</span>
+          </div>
+          <div style="font-size:11px;color:var(--text-muted);">Desvío prom: <span style="color:var(--text-dim);font-weight:500;">+${k.avgDev}d</span></div>`
+        :`<div style="display:flex;align-items:center;gap:8px;">
+            <i class="fa-solid fa-circle-check" style="color:var(--green);font-size:13px;"></i>
+            <span style="font-size:13px;font-weight:600;color:var(--green);">Todo justificado</span>
+          </div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">Desvío prom: <span style="color:var(--text-dim);font-weight:500;">${k.avgDev>0?'+':''}${k.avgDev}d</span></div>`
+      }
+    </div>`;
+  const ad=document.getElementById('alert-dot');
+  const ac=document.getElementById('alert-count');
+  if(k.unjust>0){ad.style.display='flex';ac.textContent=`${k.unjust} desvío${k.unjust>1?'s':''} sin justificar`;}
+  else{ad.style.display='none';}
+}
+
+function statusBadge(st){
+  if(st==='done') return '<span class="badge badge-green"><i class="fa-solid fa-check" style="font-size:9px;"></i> Completado</span>';
+  if(st==='wip') return '<span class="badge badge-blue"><i class="fa-solid fa-circle-half-stroke" style="font-size:9px;"></i> En proceso</span>';
+  return '<span class="badge badge-gray"><i class="fa-regular fa-clock" style="font-size:9px;"></i> Pendiente</span>';
+}
+function devCell(item){
+  const d=getDeviation(item);
+  if(d===null) return '<span style="color:var(--text-muted);font-size:12px;">—</span>';
+  if(d>0) return `<span class="deviate-red">+${d}d</span>`;
+  if(d<0) return `<span class="deviate-green">${d}d</span>`;
+  return '<span style="color:var(--green);font-size:12px;">0d</span>';
+}
+
+// NIVEL 1: FLUJOS — acordeón inline
+function filterFlujos(mode,btn){filterMode=mode;document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderFlujos();}
+let completadosOpen=false;
+function toggleCompletados(){
+  completadosOpen=!completadosOpen;
+  document.getElementById('completados-panel').style.display=completadosOpen?'block':'none';
+  document.getElementById('completados-chevron').style.transform=completadosOpen?'rotate(180deg)':'rotate(0deg)';
+}
+
+function renderFlujos(){
+  const tbody=document.getElementById('flujos-tbody');tbody.innerHTML='';
+  const ctbody=document.getElementById('completados-tbody');ctbody.innerHTML='';
+  const filtroAnalista=document.getElementById('filtro-analista')?.value||'';
+
+  let activos=flujos.filter(f=>flujoStats(f).pct<100);
+  const completos=flujos.filter(f=>flujoStats(f).pct===100);
+  if(filterMode==='delayed') activos=activos.filter(f=>flujoStats(f).avgDev>0);
+  // Filtro por analista a nivel flujo
+  const activosFilt=filtroAnalista?activos.filter(f=>f.responsable===filtroAnalista):activos;
+  const completosFilt=filtroAnalista?completos.filter(f=>f.responsable===filtroAnalista):completos;
+
+  const bp=document.getElementById('badge-en-proceso');if(bp)bp.textContent=activosFilt.length;
+  const bc=document.getElementById('badge-completados');if(bc)bc.textContent=completosFilt.length;
+
+  function buildFlujoRow(f, tbody, isCompact){
+    const s=flujoStats(f);
+    const isSel=selectedFlujo===f.id;
+    let stBadge=s.pct===100?'<span class="badge badge-green">✓ Completo</span>':s.avgDev>0?'<span class="badge badge-yellow">⚠ Desvío</span>':'<span class="badge badge-blue">En curso</span>';
+    const mDone=f.modelos.filter(m=>modeloStats(m).pct===100).length;
+    const tr=document.createElement('tr');
+    tr.className='row-flujo'+(isSel?' selected':'');
+    tr.setAttribute('data-flujo',f.id);
+    if(isCompact) tr.style.opacity='0.85';
+    tr.innerHTML=`
+      <td style="padding:${isCompact?'10':'12'}px 18px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:${isCompact?'28':'32'}px;height:${isCompact?'28':'32'}px;border-radius:8px;background:${s.pct===100?'var(--green-bg)':'var(--bg-deep)'};border:1px solid ${s.pct===100?'rgba(16,185,129,0.2)':'var(--border-light)'};display:flex;align-items:center;justify-content:center;">
+            <i class="fa-solid ${s.pct===100?'fa-check':f.icon}" style="font-size:${isCompact?'11':'12'}px;color:${s.pct===100?'var(--green)':'var(--text-dim)'};"></i>
+          </div>
+          <div>
+            <div style="font-size:13px;font-weight:${isCompact?'500':'600'};">${f.name}</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:2px;display:flex;align-items:center;gap:6px;">
+              Encendido: ${fmt(f.encendido)}
+              ${f.responsable&&f.responsable!=='—'?`<span style="display:inline-flex;align-items:center;gap:3px;padding:1px 7px;border-radius:99px;font-size:10px;font-weight:600;background:${ANALISTA_BG[f.responsable]||'rgba(100,116,139,0.1)'};color:${ANALISTA_COLORS[f.responsable]||'var(--text-muted)'};">${f.responsable}</span>`:''}
+            </div>
+          </div>
+        </div>
+      </td>
+      ${isCompact?`
+        <td style="padding:10px;text-align:center;font-size:13px;color:var(--text-dim);">${f.modelos.length}/${f.modelos.length}</td>
+        <td style="padding:10px;text-align:center;">${s.avgDev>0?`<span style="color:var(--text-dim);font-size:12px;">+${s.avgDev}d</span>`:`<span style="color:var(--green);font-size:12px;">0d</span>`}</td>
+        <td style="padding:10px;text-align:center;font-size:12px;color:var(--text-dim);">${fmt(f.encendido)}</td>
+      `:`
+        <td style="padding:12px;text-align:center;min-width:130px;">
+          <div style="font-size:13px;font-weight:600;margin-bottom:4px;">${s.pct}%</div>
+          <div class="progress-bar"><div class="progress-fill" style="width:${s.pct}%;background:var(--blue);"></div></div>
+        </td>
+        <td style="padding:12px;text-align:center;font-size:13px;color:var(--text-dim);">${mDone}/${f.modelos.length}</td>
+        <td style="padding:12px;text-align:center;">${s.avgDev>0?`<span style="color:var(--yellow);font-weight:600;font-size:13px;">+${s.avgDev}d</span>`:`<span style="color:var(--green);font-size:13px;">0d</span>`}</td>
+        <td style="padding:12px;text-align:center;">${stBadge}</td>
+      `}
+      <td style="padding:12px;text-align:center;">${s.hasSignOff?'<span class="badge badge-green"><i class="fa-solid fa-file-signature" style="font-size:9px;"></i> OK</span>':'<span class="badge badge-gray">Pendiente</span>'}</td>
+      <td style="padding:12px;text-align:right;">
+        <button class="btn btn-ghost" onclick="toggleFlujo('${f.id}',event)" style="font-size:11px;">
+          <i class="fa-solid ${isSel?'fa-chevron-up':'fa-chevron-down'}"></i> ${isSel?'Cerrar':'Ver modelos'}
+        </button>
+      </td>`;
+    tr.ondblclick=()=>toggleFlujo(f.id,{stopPropagation:()=>{}});
+    tbody.appendChild(tr);
+
+    // Acordeón de modelos inline
+    if(isSel){
+      const expandTr=document.createElement('tr');
+      expandTr.setAttribute('data-expand-flujo',f.id);
+      const cols=isCompact?6:7;
+      expandTr.innerHTML=`<td colspan="${cols}" style="padding:0;background:rgba(0,0,0,0.15);border-bottom:2px solid var(--border-light);">
+        <div style="padding:12px 18px 12px 42px;">
+          ${buildModelosHTML(f)}
+        </div>
+      </td>`;
+      tbody.appendChild(expandTr);
+    }
+  }
+
+  activosFilt.forEach(f=>buildFlujoRow(f,tbody,false));
+  if(activosFilt.length===0){
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td colspan="7" style="padding:24px;text-align:center;color:var(--text-muted);font-size:13px;">No hay flujos en proceso${filterMode==='delayed'?' con desvío':''}${filtroAnalista?' para '+filtroAnalista:''}</td>`;
+    tbody.appendChild(tr);
+  }
+  completosFilt.forEach(f=>buildFlujoRow(f,ctbody,true));
+  if(completosFilt.length===0){
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td colspan="6" style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px;">Aún no hay flujos completados${filtroAnalista?' para '+filtroAnalista:''}</td>`;
+    ctbody.appendChild(tr);
+  }
+}
+
+function buildModelosHTML(f){
+  let html=`<table style="width:100%;border-collapse:collapse;border:1px solid var(--border);border-radius:8px;overflow:hidden;">
+    <thead><tr style="background:rgba(0,0,0,0.2);">
+      <th style="text-align:left;padding:8px 14px;font-size:10px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Modelo</th>
+      <th style="text-align:center;padding:8px 10px;font-size:10px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Avance</th>
+      <th style="text-align:center;padding:8px 10px;font-size:10px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Acts.</th>
+      <th style="text-align:center;padding:8px 10px;font-size:10px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Desvío</th>
+      <th style="text-align:center;padding:8px 10px;font-size:10px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Estado</th>
+      <th style="padding:8px 10px;"></th>
+    </tr></thead>
+    <tbody id="inline-modelos-${f.id}"></tbody>
+  </table>`;
+  // We'll populate via JS after insertion
+  setTimeout(()=>populateModelosInline(f),0);
+  return html;
+}
+
+function populateModelosInline(f){
+  const tbody=document.getElementById(`inline-modelos-${f.id}`);if(!tbody)return;
+  tbody.innerHTML='';
+  let modelos=f.modelos;
+  // Si el filtro es "con desvío", mostrar solo modelos que tienen al menos una actividad con desvío
+  if(filterMode==='delayed') modelos=modelos.filter(m=>m.actividades.some(a=>{ const d=getDeviation(a); return d!==null&&d>0; }));
+  if(modelos.length===0){
+    tbody.innerHTML=`<tr><td colspan="6" style="padding:16px;text-align:center;color:var(--text-muted);font-size:12px;">Sin modelos con desvío</td></tr>`;
+    return;
+  }
+  modelos.forEach(m=>{
+    const s=modeloStats(m);
+    const isSel=selectedModelo===m.id;
+    let stBadge=s.pct===100?'<span class="badge badge-green" style="font-size:10px;">✓</span>':s.avgDev>0?'<span class="badge badge-red" style="font-size:10px;">⚠</span>':'<span class="badge badge-blue" style="font-size:10px;">·</span>';
+    const tr=document.createElement('tr');
+    tr.style.borderTop='1px solid var(--border)';
+    tr.style.cursor='pointer';
+    tr.style.transition='background 0.12s';
+    if(isSel) tr.style.background='rgba(139,92,246,0.07)';
+    tr.onmouseenter=()=>{if(!isSel)tr.style.background='rgba(255,255,255,0.02)';};
+    tr.onmouseleave=()=>{if(!isSel)tr.style.background='';};
+    tr.innerHTML=`
+      <td style="padding:9px 14px;font-size:12px;font-weight:500;padding-left:${isSel?'12':'14'}px;border-left:${isSel?'2px solid var(--purple)':'2px solid transparent'};">
+        <i class="fa-solid fa-layer-group" style="color:var(--text-muted);font-size:10px;margin-right:6px;"></i>${m.name}
+      </td>
+      <td style="padding:9px 10px;text-align:center;min-width:90px;">
+        <div style="font-size:11px;font-weight:600;margin-bottom:3px;color:${s.pct===100?'var(--green)':'var(--text)'};">${s.pct}%</div>
+        <div class="progress-bar" style="height:3px;"><div class="progress-fill" style="width:${s.pct}%;background:${s.pct===100?'var(--green)':'var(--blue)'};"></div></div>
+      </td>
+      <td style="padding:9px 10px;text-align:center;font-size:11px;color:var(--text-dim);">${s.done}/${s.total}</td>
+      <td style="padding:9px 10px;text-align:center;">${s.avgDev>0?`<span class="deviate-red" style="font-size:11px;">+${s.avgDev}d</span>`:`<span style="color:var(--green);font-size:11px;">0d</span>`}</td>
+      <td style="padding:9px 10px;text-align:center;">${stBadge}</td>
+      <td style="padding:9px 10px;text-align:right;">
+        <button class="btn btn-ghost" onclick="toggleModelo('${f.id}','${m.id}',event)" style="font-size:10px;padding:4px 8px;">
+          <i class="fa-solid ${isSel?'fa-chevron-up':'fa-chevron-down'}"></i>
+        </button>
+      </td>`;
+    tbody.appendChild(tr);
+
+    // Acordeón de actividades inline
+    if(isSel){
+      const actTr=document.createElement('tr');
+      actTr.style.background='rgba(139,92,246,0.04)';
+      actTr.innerHTML=`<td colspan="6" style="padding:0 0 0 20px;border-left:2px solid var(--purple);">
+        <div style="padding:10px 12px;">
+          ${buildActividadesHTML(f,m)}
+        </div>
+      </td>`;
+      tbody.appendChild(actTr);
+      setTimeout(()=>renderActRows(f,m),0);
+    }
+  });
+}
+
+function buildActividadesHTML(f,m){
+  return `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+    <span style="font-size:11px;color:var(--purple);font-weight:600;"><i class="fa-solid fa-list-check" style="margin-right:5px;"></i>${m.name} — Actividades</span>
+    <button class="btn btn-green" onclick="saveModelo('${f.id}','${m.id}')" style="font-size:11px;padding:4px 10px;"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
+  </div>
+  <div style="overflow-x:auto;">
+  <table style="width:100%;border-collapse:collapse;border:1px solid var(--border);border-radius:6px;overflow:hidden;">
+    <thead><tr style="background:rgba(0,0,0,0.2);">
+      <th style="text-align:left;padding:7px 12px;font-size:10px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;">Actividad</th>
+      <th style="text-align:center;padding:7px 8px;font-size:10px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;">Responsable</th>
+      <th style="text-align:center;padding:7px 8px;font-size:10px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;">Estado</th>
+      <th style="text-align:center;padding:7px 8px;font-size:10px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;">ETA</th>
+      <th style="text-align:center;padding:7px 8px;font-size:10px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;">Real</th>
+      <th style="text-align:center;padding:7px 8px;font-size:10px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;">Desvío</th>
+      <th style="padding:7px 12px;font-size:10px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;">Justificación</th>
+    </tr></thead>
+    <tbody id="acts-tbody-${m.id}"></tbody>
+  </table>
+  </div>`;
+}
+
+function toggleFlujo(id,e){
+  e.stopPropagation&&e.stopPropagation();
+  if(selectedFlujo===id){selectedFlujo=null;selectedModelo=null;}
+  else{selectedFlujo=id;selectedModelo=null;}
+  renderFlujos();
+}
+function toggleModelo(fid,mid,e){
+  e.stopPropagation&&e.stopPropagation();
+  selectedModelo=selectedModelo===mid?null:mid;
+  // Re-render just the modelos section inline
+  populateModelosInline(flujos.find(x=>x.id===fid));
+}
+
+// NIVEL 2+3: kept as stubs for compatibility
+function renderModelos(){}
+function renderActividades(){}
+
+function renderActRows(f,m){
+  const tbody=document.getElementById(`acts-tbody-${m.id}`);if(!tbody)return;
+  tbody.innerHTML='';
+  const filtroAnalista=document.getElementById('filtro-analista')?.value||'';
+  let actividades=m.actividades;
+  // Si el filtro es "con desvío", mostrar solo actividades con desvío
+  if(filterMode==='delayed') actividades=actividades.filter(a=>{ const d=getDeviation(a); return d!==null&&d>0; });
+  if(actividades.length===0){
+    tbody.innerHTML=`<tr><td colspan="7" style="padding:14px;text-align:center;color:var(--text-muted);font-size:12px;">Sin actividades con desvío en este modelo</td></tr>`;
+    return;
+  }
+  actividades.forEach(act=>{
+    if(filtroAnalista&&act.responsable!==filtroAnalista) return;
+    const dev=getDeviation(act);
+    const needsJ=dev!==null&&dev>0;
+    const missingJ=needsJ&&(!act.justify||act.justify.length<10);
+    const resp=act.responsable||'—';
+    const color=ANALISTA_COLORS[resp]||'var(--text-muted)';
+    const bg=ANALISTA_BG[resp]||'rgba(100,116,139,0.1)';
+    const initials=resp==='—'?'—':resp.slice(0,2).toUpperCase();
+    const tr=document.createElement('tr');tr.style.borderBottom='1px solid var(--border)';
+    tr.innerHTML=`
+      <td style="padding:9px 18px;font-size:13px;">${act.name}</td>
+      <td style="padding:9px 10px;text-align:center;">
+        <select onchange="updateAct('${f.id}','${m.id}','${act.id}','responsable',this.value)" style="width:100px;font-size:12px;text-align:center;background:${bg};color:${color};border-color:${color}20;">
+          ${ANALISTAS.map(a=>`<option value="${a}" ${act.responsable===a?'selected':''}>${a}</option>`).join('')}
+        </select>
+      </td>
+      <td style="padding:9px 10px;text-align:center;">
+        <select onchange="updateAct('${f.id}','${m.id}','${act.id}','status',this.value)" style="width:120px;font-size:12px;text-align:center;">
+          <option value="pending" ${act.status==='pending'?'selected':''}>Pendiente</option>
+          <option value="wip" ${act.status==='wip'?'selected':''}>En proceso</option>
+          <option value="done" ${act.status==='done'?'selected':''}>Completado</option>
+        </select>
+      </td>
+      <td style="padding:9px 10px;text-align:center;">
+        <input type="date" value="${act.eta||''}" onchange="updateAct('${f.id}','${m.id}','${act.id}','eta',this.value)" style="width:130px;font-size:12px;">
+      </td>
+      <td style="padding:9px 10px;text-align:center;">
+        <input type="date" value="${act.done||''}" onchange="updateAct('${f.id}','${m.id}','${act.id}','done',this.value)" style="width:130px;font-size:12px;" ${act.status!=='done'?'disabled':''}>
+      </td>
+      <td style="padding:9px 10px;text-align:center;">${devCell(act)}</td>
+      <td style="padding:9px 18px;min-width:200px;">
+        ${needsJ?`<input type="text" placeholder="Justificación obligatoria..." value="${act.justify||''}"
+          class="${missingJ?'justify-required':''}"
+          onchange="updateAct('${f.id}','${m.id}','${act.id}','justify',this.value)"
+          style="font-size:12px;">`
+        :`<span style="color:var(--text-muted);font-size:12px;">—</span>`}
+      </td>`;
+    tbody.appendChild(tr);
+  });
+}
+function updateAct(fid,mid,aid,field,value){
+  const f=flujos.find(x=>x.id===fid);
+  const m=f.modelos.find(x=>x.id===mid);
+  const act=m.actividades.find(a=>a.id===aid);
+  act[field]=value;
+  if(field==='status'){
+    if(value==='done'&&!act.done) act.done=todayStr();
+    if(value!=='done') act.done=null;
+  }
+  renderActRows(f,m);
+  // Refresh modelo row stats inline without full re-render
+  populateModelosInline(f);
+  renderKPIs();renderFlujos();
+}
+function saveModelo(fid,mid){
+  const f=flujos.find(x=>x.id===fid);
+  const m=f.modelos.find(x=>x.id===mid);
+  const s=modeloStats(m);
+  if(s.unjust>0){showToast(`⚠ ${s.unjust} justificación(es) obligatoria(s) pendiente(s).`,'red');renderActRows(f,m);return;}
+  showToast(`✓ Cambios guardados — ${m.name}`,'green');
+}
+
+// EXPORT / IMPORT
+function exportCSV(){
+  const k=globalKPIs();
+  let warn='';
+  if(k.unjust>0) warn=`# ADVERTENCIA: ${k.unjust} desvío(s) sin justificar\n`;
+  let rows=[warn+'Flujo,Modelo,Actividad,Responsable,Estado,ETA,Fecha Real,Desvío (días),Justificación'];
+  flujos.forEach(f=>{
+    f.modelos.forEach(m=>{
+      m.actividades.forEach(a=>{
+        const d=getDeviation(a);
+        rows.push(`"${f.name}","${m.name}","${a.name}","${a.responsable||'—'}","${a.status}","${a.eta||''}","${a.done||''}","${d!==null?d:''}","${a.justify||''}"`);
+      });
+    });
+  });
+  const blob=new Blob([rows.join('\n')],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='migrations_guard_export.csv';a.click();
+  URL.revokeObjectURL(url);
+  showToast(k.unjust>0?`⚠ CSV exportado con ${k.unjust} desvío(s) sin justificar`:'✓ CSV exportado correctamente', k.unjust>0?'yellow':'green');
+}
+function downloadTemplate(){
+  const BT_MDC='BT'; // header reference
+  const rows=[
+    'Flujo,Arquetipo,Responsable,Modelo,Actividad,Estado,ETA,Fecha Real,Justificación',
+    '# ── INSTRUCCIONES ──────────────────────────────────────────────────────────────',
+    '# 1. Completá una fila por FLUJO: indicá Nombre, Arquetipo (BT o MDC) y Responsable',
+    '# 2. Estado: pending | wip | done',
+    '# 3. Fechas: formato YYYY-MM-DD',
+    '# 4. Borrá los modelos que NO aplican al flujo antes de importar',
+    '# ────────────────────────────────────────────────────────────────────────────────',
+    '',
+    '# ── VALIDACIÓN ──',
+    '"E2E Mi Flujo CBT-BT","BT","Joaco","Validación","Validación de fuentes (Banco / Site / Liqui)","pending","2026-07-01","",""',
+    '"E2E Mi Flujo CBT-BT","BT","Joaco","Validación","Validación de cuentas (Con envío de mail de confirmación)","pending","2026-07-02","",""',
+    '',
+    '# ── SERIALIZACIÓN (solo BT) ──',
+    '"E2E Mi Flujo CBT-BT","BT","Joaco","Serialización","Pedido de lógicas V1","pending","2026-07-05","",""',
+    '"E2E Mi Flujo CBT-BT","BT","Joaco","Serialización","Conciliación de Integridad","pending","2026-07-06","",""',
+    '"E2E Mi Flujo CBT-BT","BT","Joaco","Serialización","Conciliación Bank","pending","2026-07-08","",""',
+    '"E2E Mi Flujo CBT-BT","BT","Joaco","Serialización","Conciliación Model","pending","2026-07-10","",""',
+    '"E2E Mi Flujo CBT-BT","BT","Joaco","Serialización","Traductor contable (Serialización)","pending","2026-07-12","",""',
+    '"E2E Mi Flujo CBT-BT","BT","Joaco","Serialización","Control manual (Serialización)","pending","2026-07-14","",""',
+    '"E2E Mi Flujo CBT-BT","BT","Joaco","Serialización","Sign-Off (SO) de Serialización","pending","2026-07-15","",""',
+    '',
+    '# ── M10 ──',
+    '"E2E Mi Flujo CBT-BT","BT","Joaco","M10","Validación de movimientos vs mp_source","pending","2026-07-18","",""',
+    '"E2E Mi Flujo CBT-BT","BT","Joaco","M10","Conciliación Dummy (M10)","pending","2026-07-19","",""',
+    '"E2E Mi Flujo CBT-BT","BT","Joaco","M10","Traductor contable (M10)","pending","2026-07-20","",""',
+    '"E2E Mi Flujo CBT-BT","BT","Joaco","M10","Control manual (M10)","pending","2026-07-21","",""',
+    '"E2E Mi Flujo CBT-BT","BT","Joaco","M10","Sign-Off (SO) de M10","pending","2026-07-22","",""',
+    '',
+    '# ── M20/70 (solo BT) ──',
+    '"E2E Mi Flujo CBT-BT","BT","Joaco","M20/70","Conciliación Dummy (M20/70)","pending","2026-07-25","",""',
+    '"E2E Mi Flujo CBT-BT","BT","Joaco","M20/70","Traductor contable (M20/70)","pending","2026-07-26","",""',
+    '"E2E Mi Flujo CBT-BT","BT","Joaco","M20/70","Control manual (M20/70)","pending","2026-07-28","",""',
+    '"E2E Mi Flujo CBT-BT","BT","Joaco","M20/70","Sign-Off (SO) de M20/70","pending","2026-07-30","",""',
+    '',
+    '# ── BANCOS MDC (solo MDC) ──',
+    '"E2E Mi Flujo MDC","MDC","Joaco","Bancos MDC","Integración banco manual","pending","2026-07-15","",""',
+    '"E2E Mi Flujo MDC","MDC","Joaco","Bancos MDC","Integración banco automático","pending","2026-07-18","",""',
+    '"E2E Mi Flujo MDC","MDC","Joaco","Bancos MDC","Parametría general de cuentas","pending","2026-07-20","",""',
+    '"E2E Mi Flujo MDC","MDC","Joaco","Bancos MDC","Conciliación 20_BANK_SOURCE","pending","2026-07-22","",""',
+    '"E2E Mi Flujo MDC","MDC","Joaco","Bancos MDC","Control manual de consistencia bancaria","pending","2026-07-24","",""',
+    '',
+    '# ── M20 MDC / GROSS (solo MDC) ──',
+    '"E2E Mi Flujo MDC","MDC","Joaco","M20 MDC","Conciliación Gross (Monto Bruto)","pending","2026-07-27","",""',
+    '"E2E Mi Flujo MDC","MDC","Joaco","M20 MDC","Conciliación Dummy (M20 Gross)","pending","2026-07-28","",""',
+    '"E2E Mi Flujo MDC","MDC","Joaco","M20 MDC","Traductor contable (M20 Gross)","pending","2026-07-29","",""',
+    '"E2E Mi Flujo MDC","MDC","Joaco","M20 MDC","Control manual (M20 Gross)","pending","2026-07-31","",""',
+    '"E2E Mi Flujo MDC","MDC","Joaco","M20 MDC","Sign-Off (SO) de M20 Gross","pending","2026-08-01","",""',
+    '',
+    '# ── M50 ──',
+    '"E2E Mi Flujo CBT-BT","BT","Joaco","M50","Carga de ajustes en template (M50)","pending","2026-08-03","",""',
+    '"E2E Mi Flujo CBT-BT","BT","Joaco","M50","Transformadas en dummy (M50)","pending","2026-08-04","",""',
+    '"E2E Mi Flujo CBT-BT","BT","Joaco","M50","Configuración ZFI (M50)","pending","2026-08-06","",""',
+    '"E2E Mi Flujo CBT-BT","BT","Joaco","M50","Traductor contable (M50)","pending","2026-08-07","",""',
+    '"E2E Mi Flujo CBT-BT","BT","Joaco","M50","Control manual (M50)","pending","2026-08-09","",""',
+    '"E2E Mi Flujo CBT-BT","BT","Joaco","M50","Sign-Off (SO) de M50","pending","2026-08-10","",""',
+    '',
+    '# ── COSTS TCH (solo MDC) ──',
+    '"E2E Mi Flujo MDC","MDC","Joaco","Costs TCH","Configuración de PS_reprocesos (TCH)","pending","2026-08-12","",""',
+    '"E2E Mi Flujo MDC","MDC","Joaco","Costs TCH","Configuración de PS_liqmoana (TCH)","pending","2026-08-14","",""',
+    '"E2E Mi Flujo MDC","MDC","Joaco","Costs TCH","Configuración de hash_id (TCH)","pending","2026-08-15","",""',
+    '"E2E Mi Flujo MDC","MDC","Joaco","Costs TCH","Mapeo de Moana_site y Liq_moana (TCH)","pending","2026-08-17","",""',
+    '"E2E Mi Flujo MDC","MDC","Joaco","Costs TCH","Configuración del motor de Reprocesos (TCH)","pending","2026-08-19","",""',
+    '"E2E Mi Flujo MDC","MDC","Joaco","Costs TCH","AG Control de costos (Validación de tasas)","pending","2026-08-21","",""',
+    '"E2E Mi Flujo MDC","MDC","Joaco","Costs TCH","AG Control de plazos (Liquidación)","pending","2026-08-22","",""',
+    '',
+    '# ── COSTS CALC (solo MDC) ──',
+    '"E2E Mi Flujo MDC","MDC","Joaco","Costs Calc","Parametría general de tasas y comisiones (COST_CALC)","pending","2026-08-12","",""',
+    '"E2E Mi Flujo MDC","MDC","Joaco","Costs Calc","Conciliación cost_calc","pending","2026-08-15","",""',
+    '',
+    '# ── TABLEROS ──',
+    '"E2E Mi Flujo CBT-BT","BT","Joaco","Tableros","Pedido de export de modelos y armado de templates (B&A)","pending","2026-08-24","",""',
+    '"E2E Mi Flujo CBT-BT","BT","Joaco","Tableros","Reunión de KO (Kick-Off) con el equipo de B&A","pending","2026-08-26","",""',
+    '"E2E Mi Flujo CBT-BT","BT","Joaco","Tableros","Sign-Off (SO) del Tablero final por B&A","pending","2026-08-28","",""',
+    '',
+    '# ── ENCENDIDO ──',
+    '"E2E Mi Flujo CBT-BT","BT","Joaco","Encendido","Validación de fuentes","pending","2026-09-02","",""',
+    '"E2E Mi Flujo CBT-BT","BT","Joaco","Encendido","Encendido de TC","pending","2026-09-03","",""',
+    '"E2E Mi Flujo CBT-BT","BT","Joaco","Encendido","Estabilización","pending","2026-09-04","",""',
+    '"E2E Mi Flujo CBT-BT","BT","Joaco","Encendido","Traspaso","pending","2026-09-04","",""',
+    '"E2E Mi Flujo CBT-BT","BT","Joaco","Encendido","Mail de traspaso","pending","2026-09-05","",""',
+    '"E2E Mi Flujo CBT-BT","BT","Joaco","Encendido","OK mail de traspaso","pending","2026-09-05","",""',
+  ];
+  const blob=new Blob([rows.join('\n')],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='plantilla_migrations_guard.csv';a.click();
+  URL.revokeObjectURL(url);
+  showToast('✓ Plantilla descargada','green');
+}
+function importCSV(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const lines=e.target.result.split('\n').filter(l=>l.trim()&&!l.startsWith('#'));
+      const headers=lines[0].split(',').map(h=>h.replace(/^"|"$/g,'').trim().toLowerCase());
+      const data=lines.slice(1).filter(l=>l.trim()&&!l.startsWith('#'));
+      const fMap={};
+      data.forEach(line=>{
+        const cols=[];let cur='';let inQ=false;
+        for(let ch of line){if(ch==='"'){inQ=!inQ;}else if(ch===','&&!inQ){cols.push(cur.trim());cur='';}else{cur+=ch;}}
+        cols.push(cur.trim());
+        const row={};headers.forEach((h,i)=>{row[h]=cols[i]?cols[i].replace(/^"|"$/g,'').trim():'';});
+        const fn=row['flujo']||'';const mn=row['modelo']||'';const an=row['actividad']||row['activity']||'';
+        const arq=row['arquetipo']||'BT';const resp=row['responsable']||'—';
+        if(!fn||!mn||!an)return;
+        if(!fMap[fn])fMap[fn]={name:fn,arquetipo:arq,responsable:resp,modelos:{}};
+        if(!fMap[fn].modelos[mn])fMap[fn].modelos[mn]={name:mn,actividades:[]};
+        const statusMap={'pendiente':'pending','en proceso':'wip','completado':'done','done':'done','wip':'wip','pending':'pending'};
+        fMap[fn].modelos[mn].actividades.push({
+          id:fn+mn+an+Date.now(),name:an,
+          status:statusMap[(row['estado']||'pending').toLowerCase()]||'pending',
+          eta:row['eta']||null,
+          done:row['fecha real']||row['fecha_real']||null,
+          justify:row['justificación']||row['justificacion']||'',
+          responsable:resp
+        });
+      });
+      Object.values(fMap).forEach(fd=>{
+        const existing=flujos.find(f=>f.name===fd.name);
+        const modelos=Object.values(fd.modelos).map(md=>({
+          id:md.name.toLowerCase().replace(/[\s\/]+/g,'-')+'-'+Date.now(),
+          name:md.name,actividades:md.actividades
+        }));
+        if(existing){
+          existing.modelos=modelos;
+          existing.responsable=fd.responsable;
+        } else {
+          flujos.push({
+            id:fd.name.toLowerCase().replace(/\s+/g,'-')+'-'+Date.now(),
+            name:fd.name,icon:fd.arquetipo==='MDC'?'fa-credit-card':'fa-money-bill-transfer',
+            encendido:todayStr(),responsable:fd.responsable,arquetipo:fd.arquetipo,modelos
+          });
+        }
+      });
+      selectedFlujo=null;selectedModelo=null;
+      renderAll();
+      showToast(`✓ CSV importado — ${Object.keys(fMap).length} flujo(s) cargado(s)`,'green');
+    }catch(err){console.error(err);showToast('✗ Error al parsear el CSV. Verificá el formato.','red');}
+  };
+  reader.readAsText(file);
+  input.value='';
+}
+
+// ALERT LOG
+function fireAlert(type){
+  const k=globalKPIs();
+  const now=new Date().toLocaleTimeString('es-AR');
+  const log=document.getElementById('alert-log');
+  if(log.children.length===1&&log.children[0].tagName==='DIV'&&log.children[0].style.textAlign==='center') log.innerHTML='';
+  const entry=document.createElement('div');
+  entry.style.cssText='padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-deep);font-size:12px;font-family:monospace;color:var(--text-dim);';
+  const icon=type==='slack'?'🟣 [Slack]':'📧 [Mail]';
+  entry.innerHTML=`<span style="color:var(--text-muted);">${now}</span> ${icon} <span style="color:${k.unjust>0?'var(--red)':'var(--green)'};">${k.unjust>0?`ALERT: ${k.unjust} paso(s) con desvío sin justificar. Avance: ${k.pct}%. Acción requerida.`:`OK: Todos los desvíos justificados. Avance: ${k.pct}%. Sin bloqueos.`}</span>`;
+  log.prepend(entry);
+}
+
+// CHAT
+let chatOpen=false;
+function toggleChat(){
+  chatOpen=!chatOpen;
+  const p=document.getElementById('chat-panel');
+  p.classList.toggle('open',chatOpen);
+  document.getElementById('unread-dot').style.display='none';
+  if(chatOpen&&document.getElementById('chat-messages').children.length===0) initChat();
+}
+function initChat(){
+  addChatMsg('👋 ¡Hola! Soy tu agente de auditoría. Podés decirme en lenguaje natural qué paso actualizaste, o pedirme que cree un nuevo flujo.<br><br>Ej: <em>"Completé hoy Modelo 10 de Alipay, demoró 2 días por descuadre de saldos"</em>','bot');
+}
+function setChat(txt){
+  if(!chatOpen) toggleChat();
+  document.getElementById('chat-input').value=txt;
+  document.getElementById('chat-input').focus();
+}
+function addChatMsg(text,role){
+  const div=document.createElement('div');
+  div.className=`chat-msg ${role}`;div.innerHTML=text;
+  document.getElementById('chat-messages').appendChild(div);
+  document.getElementById('chat-messages').scrollTop=99999;
+}
+function parseNL(text){
+  const lower=text.toLowerCase();
+  // Query
+  if((lower.includes('desvío')||lower.includes('desvio'))&&(lower.includes('ver')||lower.includes('qué')||lower.includes('sin justif'))){
+    let res='<b>Desvíos sin justificar:</b><br>';let found=false;
+    flujos.forEach(f=>f.modelos.forEach(m=>m.actividades.forEach(a=>{
+      const d=getDeviation(a);
+      if(d!==null&&d>0&&(!a.justify||a.justify.length<10)){
+        res+=`• ${f.name} → ${m.name} → <b>${a.name}</b>: <span style="color:var(--red);">+${d}d</span><br>`;found=true;
+      }
+    })));
+    if(!found) res='✅ ¡No hay desvíos pendientes de justificación!';
+    return{type:'query',response:res};
+  }
+  // Nuevo flujo por chat
+  if(lower.includes('nuevo flujo')||lower.includes('dar de alta')||lower.includes('alta un flujo')){
+    const nameMatch=text.match(/(?:llamado|nombre|flujo)\s+([A-Za-z\s\-]+?)(?:\s+con|\s+modelos|,|fecha|$)/i);
+    const dateMatch=text.match(/(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/);
+    const fName=nameMatch?nameMatch[1].trim():'Nuevo Flujo';
+    const modelosMap={'10':'Modelo Contable 10','20':'Modelo Contable 20','50':'Modelo Contable 50','70':'Modelo Contable 70','fuentes':'Validación de Fuentes','tableros':'Tableros','sign':'Sign-Off Final'};
+    const mods=[];
+    Object.entries(modelosMap).forEach(([k,v])=>{if(lower.includes(k)) mods.push(v);});
+    if(mods.length===0) mods.push('Validación de Fuentes','Modelo Contable 10','Sign-Off Final');
+    const defaultActs=['Configurar','Validar','Aprobar'];
+    const newFlujo={
+      id:fName.toLowerCase().replace(/\s+/g,'-')+'-'+Date.now(),
+      name:'E2E '+fName,icon:'fa-wallet',
+      encendido:dateMatch?parseDateArg(dateMatch[1]):futureDate(30),
+      modelos:mods.map(mn=>({
+        id:mn.toLowerCase().replace(/\s+/g,'-')+'-'+Date.now(),
+        name:mn,
+        actividades:defaultActs.map((a,i)=>({id:mn+i+Date.now(),name:a+' '+mn,status:'pending',eta:futureDate((i+1)*7),done:null,justify:''}))
+      }))
+    };
+    flujos.push(newFlujo);renderAll();
+    return{type:'success',response:`✅ Flujo <b>${newFlujo.name}</b> creado con ${mods.length} modelos y fecha de encendido <b>${fmt(newFlujo.encendido)}</b>. Podés verlo en la tabla de Flujos E2E.`};
+  }
+  // Identificar flujo
+  let targetFlujo=null;
+  flujos.forEach(f=>{const n=f.name.toLowerCase();if(lower.includes('alipay')&&n.includes('alipay'))targetFlujo=f;if(lower.includes('pix')&&n.includes('pix'))targetFlujo=f;if((lower.includes('payout')||lower.includes('brazil'))&&n.includes('payout'))targetFlujo=f;});
+  if(!targetFlujo){
+    flujos.forEach(f=>{const parts=f.name.toLowerCase().split(/[\s\-]/);if(parts.some(p=>lower.includes(p)&&p.length>3))targetFlujo=f;});
+  }
+  if(!targetFlujo) return{type:'error',response:'No pude identificar el flujo. ¿Es Alipay, Pix o Payout?'};
+  // Identificar modelo
+  let targetModelo=null;
+  const mKeys=[{k:'validaci',n:'fuentes'},{k:'fuente',n:'fuentes'},{k:'modelo 10',n:'mod10'},{k:'mod 10',n:'mod10'},{k:'model 10',n:'mod10'},{k:'modelo 20',n:'mod20'},{k:'mod 20',n:'mod20'},{k:'modelo 50',n:'mod50'},{k:'modelo 70',n:'mod70'},{k:'serial',n:'serial'},{k:'tablero',n:'tablero'},{k:'dashboard',n:'tablero'},{k:'tch',n:'tch'},{k:'sign',n:'signoff'}];
+  let mKey=null;mKeys.forEach(mk=>{if(lower.includes(mk.k))mKey=mk.n;});
+  if(mKey) targetModelo=targetFlujo.modelos.find(m=>m.id.includes(mKey)||m.name.toLowerCase().includes(mKey.replace('mod','modelo ')));
+  if(!targetModelo&&mKey){
+    const map={fuentes:'Validación',mod10:'10',mod20:'20',mod50:'50',serial:'Serial',tablero:'Tablero',tch:'TCH',signoff:'Sign'};
+    const hint=map[mKey]||mKey;
+    targetModelo=targetFlujo.modelos.find(m=>m.name.toLowerCase().includes(hint.toLowerCase()));
+  }
+  if(!targetModelo) return{type:'error',response:`Identifiqué el flujo <b>${targetFlujo.name}</b> pero no el modelo. ¿Podés ser más específico?`};
+  // Identificar actividad (primera wip o pending)
+  const isComplete=lower.includes('complet')||lower.includes('terminé')||lower.includes('finaliz')||lower.includes('listo')||lower.includes('hecho');
+  const isWip=lower.includes('proceso')||lower.includes('wip')||lower.includes('inicio')||lower.includes('inicié');
+  const delayMatch=lower.match(/(\d+)\s*d[ií]a/);
+  const causeMatch=text.match(/por\s+(.{5,80}?)(?:\.|,|$)/i);
+  const days=delayMatch?parseInt(delayMatch[1]):0;
+  const cause=causeMatch?causeMatch[1].trim():null;
+  // Find target act
+  let targetAct=targetModelo.actividades.find(a=>a.status==='wip')||targetModelo.actividades.find(a=>a.status==='pending');
+  if(isComplete&&targetAct){
+    targetAct.status='done';targetAct.done=todayStr();
+    if(days>0&&cause) targetAct.justify=`Demoró ${days} días: ${cause}.`;
+    else if(days>0) targetAct.justify=`Demora de ${days} días (sin detalle).`;
+    renderAll();
+    const dev=getDeviation(targetAct);
+    return{type:'success',response:`✅ <b>${targetAct.name}</b> en <b>${targetModelo.name}</b> (${targetFlujo.name}) marcado como Completado.<br>Fecha real: ${fmt(targetAct.done)}<br>${dev>0?`Desvío: <span style="color:var(--red);">+${dev}d</span>`:'Sin desvío.'}<br>${targetAct.justify?`Justificación: <em>${targetAct.justify}</em>`:''}`};
+  }
+  if(isWip&&targetAct){
+    targetAct.status='wip';renderAll();
+    return{type:'success',response:`🔄 <b>${targetAct.name}</b> en <b>${targetModelo.name}</b> marcado como En proceso.`};
+  }
+  return{type:'error',response:`Identifiqué <b>${targetFlujo.name} → ${targetModelo.name}</b> pero no pude determinar la acción. ¿Querés completar o iniciar?`};
+}
+function parseDateArg(str){
+  const p=str.split(/[\/\-]/);
+  if(p.length===3){
+    const y=p[2].length===2?'20'+p[2]:p[2];
+    return`${y}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`;
+  }return futureDate(30);
+}
+async function sendChat(){
+  const input=document.getElementById('chat-input');
+  const text=input.value.trim();if(!text)return;
+  addChatMsg(text,'user');input.value='';
+  setTimeout(()=>{const r=parseNL(text);addChatMsg(r.response,'bot');},400);
+}
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&!e.shiftKey&&document.activeElement===document.getElementById('chat-input')){e.preventDefault();sendChat();}
+});
+
+// MODAL NUEVO FLUJO
+function openNewFlujoModal(){document.getElementById('modal-nuevo-flujo').classList.add('open');}
+function closeModal(){document.getElementById('modal-nuevo-flujo').classList.remove('open');}
+document.getElementById('modal-nuevo-flujo').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
+// Master de actividades reales por modelo
+const MASTER_ACTIVIDADES={
+  validacion:['Validación de fuentes (Banco / Site / Liqui)','Validación de cuentas (Con envío de mail de confirmación)'],
+  serial:['Pedido de lógicas V1','Conciliación de Integridad','Conciliación Bank','Conciliación Model','Traductor contable (Serialización)','Control manual (Serialización)','Sign-Off (SO) de Serialización'],
+  m10:['Validación de movimientos vs mp_source','Conciliación Dummy (M10)','Traductor contable (M10)','Control manual (M10)','Sign-Off (SO) de M10'],
+  m2070:['Conciliación Dummy (M20/70)','Traductor contable (M20/70)','Control manual (M20/70)','Sign-Off (SO) de M20/70'],
+  bancos_mdc:['Integración banco manual','Integración banco automático','Parametría general de cuentas','Conciliación 20_BANK_SOURCE','Control manual de consistencia bancaria'],
+  m20_mdc:['Conciliación Gross (Monto Bruto)','Conciliación Dummy (M20 Gross)','Traductor contable (M20 Gross)','Control manual (M20 Gross)','Sign-Off (SO) de M20 Gross'],
+  m50:['Carga de ajustes en template (M50)','Transformadas en dummy (M50)','Configuración ZFI (M50)','Traductor contable (M50)','Control manual (M50)','Sign-Off (SO) de M50'],
+  costs_tch:['Configuración de PS_reprocesos (TCH)','Configuración de PS_liqmoana (TCH)','Configuración de hash_id (TCH)','Mapeo de Moana_site y Liq_moana (TCH)','Configuración del motor de Reprocesos (TCH)','AG Control de costos (Validación de tasas)','AG Control de plazos (Liquidación)'],
+  costs_calc:['Parametría general de tasas y comisiones (COST_CALC)','Conciliación cost_calc'],
+  tableros:['Pedido de export de modelos y armado de templates (B&A)','Reunión de KO (Kick-Off) con el equipo de B&A','Sign-Off (SO) del Tablero final por B&A'],
+  encendido:['Validación de fuentes','Encendido de TC','Estabilización','Traspaso','Mail de traspaso','OK mail de traspaso'],
+};
+const MASTER_NOMBRES={validacion:'Validación',serial:'Serialización',m10:'M10',m2070:'M20/70',bancos_mdc:'Bancos MDC',m20_mdc:'M20 MDC',m50:'M50',costs_tch:'Costs TCH',costs_calc:'Costs Calc',tableros:'Tableros',encendido:'Encendido'};
+const BT_MODELOS=['validacion','serial','m10','m2070','m50','tableros','encendido'];
+const MDC_MODELOS=['validacion','bancos_mdc','m20_mdc','m50','costs_tch','costs_calc','tableros','encendido'];
+
+function preseleccionarModelos(arquetipo){
+  const checks=document.querySelectorAll('#nf-modelos-check input[type=checkbox]');
+  const presel=arquetipo==='BT'?BT_MODELOS:arquetipo==='MDC'?MDC_MODELOS:[];
+  checks.forEach(ch=>{
+    ch.checked=presel.includes(ch.value);
+    const lbl=ch.closest('label');
+    lbl.style.borderColor=ch.checked?'var(--green)':'var(--border)';
+    lbl.style.color=ch.checked?'var(--green)':'';
+  });
+}
+
+function crearFlujo(){
+  const nombre=document.getElementById('nf-nombre').value.trim();
+  const encendido=document.getElementById('nf-encendido').value;
+  const responsable=document.getElementById('nf-responsable').value||'—';
+  const arquetipo=document.getElementById('nf-arquetipo').value||'BT';
+  const icon=arquetipo==='MDC'?'fa-credit-card':'fa-money-bill-transfer';
+  if(!nombre){showToast('⚠ El nombre del flujo es obligatorio','red');return;}
+  if(!encendido){showToast('⚠ La fecha de encendido es obligatoria','red');return;}
+  if(!arquetipo){showToast('⚠ Seleccioná un arquetipo (BT o MDC)','red');return;}
+  const checks=document.querySelectorAll('#nf-modelos-check input[type=checkbox]:checked');
+  if(checks.length===0){showToast('⚠ Seleccioná al menos un modelo','red');return;}
+  const modelos=[];let etaOffset=7;
+  checks.forEach(ch=>{
+    const key=ch.value;
+    const acts=(MASTER_ACTIVIDADES[key]||[]).map((an,i)=>({
+      id:key+i+Date.now(),name:an,status:'pending',
+      eta:futureDate(etaOffset+i*2),done:null,justify:'',responsable
+    }));
+    modelos.push({id:key+'-'+Date.now(),name:MASTER_NOMBRES[key]||key,actividades:acts});
+    etaOffset+=acts.length*2+5;
+  });
+  flujos.push({id:nombre.toLowerCase().replace(/\s+/g,'-')+'-'+Date.now(),name:nombre,icon,encendido,responsable,arquetipo,modelos});
+  closeModal();renderAll();
+  showToast(`✓ Flujo "${nombre}" creado — ${modelos.length} modelos, arquetipo ${arquetipo}`,'green');
+  document.getElementById('nf-nombre').value='';
+  document.getElementById('nf-encendido').value='';
+  document.getElementById('nf-arquetipo').value='';
+  preseleccionarModelos('');
+}
+
+function showToast(msg,color='green'){
+  const t=document.createElement('div');
+  const col=color==='green'?'var(--green)':color==='yellow'?'var(--yellow)':'var(--red)';
+  const bcol=color==='green'?'rgba(16,185,129,0.3)':color==='yellow'?'rgba(245,158,11,0.3)':'rgba(239,68,68,0.3)';
+  t.style.cssText=`position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:999;padding:11px 20px;border-radius:10px;font-size:13px;font-weight:500;background:var(--bg-card);border:1px solid ${bcol};color:${col};box-shadow:0 4px 20px rgba(0,0,0,0.4);white-space:nowrap;animation:fadeInUp .2s ease;`;
+  t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3500);
+}
+
+function renderAll(){
+  const sel=document.getElementById('filtro-analista');
+  if(sel){
+    const current=sel.value;
+    sel.innerHTML='<option value="">👤 Todos los analistas</option>';
+    ANALISTAS.filter(a=>a!=='—').forEach(a=>{
+      const opt=document.createElement('option');
+      opt.value=a;opt.textContent=a;if(a===current)opt.selected=true;
+      sel.appendChild(opt);
+    });
+  }
+  renderKPIs();
+  renderFlujos();
+}
+renderAll();
+</script>
+<style>@keyframes fadeInUp{from{opacity:0;transform:translateY(8px) translateX(-50%)}to{opacity:1;transform:translateY(0) translateX(-50%)}}</style>
+</body>
+</html>
