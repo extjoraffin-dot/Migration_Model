@@ -233,7 +233,11 @@ input:disabled{opacity:0.4;cursor:not-allowed;}
         <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:4px;">Nombre del Flujo *</label>
         <input id="nf-nombre" placeholder="Ej: E2E Davivienda CBT-BT">
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div>
+          <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:4px;">RECON_ID</label>
+          <input id="nf-recon" placeholder="Ej: RC-0042">
+        </div>
         <div>
           <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:4px;">Arquetipo *</label>
           <select id="nf-arquetipo" onchange="preseleccionarModelos(this.value)">
@@ -250,11 +254,10 @@ input:disabled{opacity:0.4;cursor:not-allowed;}
           <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:4px;">Responsable *</label>
           <select id="nf-responsable">
             <option value="—">Sin asignar</option>
-            <option value="Joaco">Joaco</option>
+            <option value="Joaco R">Joaco R</option>
             <option value="Sofi">Sofi</option>
-            <option value="Matías">Matías</option>
-            <option value="Lucía">Lucía</option>
-            <option value="Marcos">Marcos</option>
+            <option value="Benja">Benja</option>
+            <option value="Joaco H">Joaco H</option>
           </select>
         </div>
       </div>
@@ -291,74 +294,74 @@ function todayStr(){return today.toISOString().split('T')[0];}
 function pastDate(n){const d=new Date(today);d.setDate(d.getDate()-n);return d.toISOString().split('T')[0];}
 function futureDate(n){const d=new Date(today);d.setDate(d.getDate()+n);return d.toISOString().split('T')[0];}
 
-const ANALISTAS=['Joaco','Sofi','Matías','Lucía','Marcos','—'];
-const ANALISTA_COLORS={'Joaco':'var(--blue)','Sofi':'var(--purple)','Matías':'var(--green)','Lucía':'var(--yellow)','Marcos':'var(--red)','—':'var(--text-muted)'};
-const ANALISTA_BG={'Joaco':'var(--blue-bg)','Sofi':'var(--purple-bg)','Matías':'var(--green-bg)','Lucía':'var(--yellow-bg)','Marcos':'var(--red-bg)','—':'rgba(100,116,139,0.1)'};
+const ANALISTAS=['Joaco R','Sofi','Benja','Joaco H','—'];
+const ANALISTA_COLORS={'Joaco R':'var(--blue)','Sofi':'var(--purple)','Benja':'var(--green)','Joaco H':'var(--yellow)','—':'var(--text-muted)'};
+const ANALISTA_BG={'Joaco R':'var(--blue-bg)','Sofi':'var(--purple-bg)','Benja':'var(--green-bg)','Joaco H':'var(--yellow-bg)','—':'rgba(100,116,139,0.1)'};
 
 // ESTRUCTURA: flujos -> modelos -> actividades
 let flujos=[
   {
-    id:'alipay',name:'E2E Alipay CBT-BT',icon:'fa-building-columns',encendido:'2026-09-05',responsable:'Joaco',
+    id:'alipay',name:'E2E Alipay CBT-BT',icon:'fa-building-columns',encendido:'2026-09-05',responsable:'Joaco R',reconId:'',
     modelos:[
       {id:'alipay-validacion',name:'Validación',
         actividades:[
-          {id:'av-1',name:'Validación de fuentes (Banco / Site / Liqui)',status:'done',eta:'2026-06-01',done:'2026-06-01',justify:'',responsable:'Joaco'},
-          {id:'av-2',name:'Validación de cuentas (Con envío de mail de confirmación)',status:'done',eta:'2026-06-03',done:'2026-06-03',justify:'',responsable:'Joaco'},
+          {id:'av-1',name:'Validación de fuentes (Banco / Site / Liqui)',status:'done',eta:'2026-06-01',done:'2026-06-01',justify:'',responsable:'Joaco R'},
+          {id:'av-2',name:'Validación de cuentas (Con envío de mail de confirmación)',status:'done',eta:'2026-06-03',done:'2026-06-03',justify:'',responsable:'Joaco R'},
         ]
       },
       {id:'alipay-serial',name:'Serialización',
         actividades:[
-          {id:'as-1',name:'Pedido de lógicas V1',status:'done',eta:'2026-06-05',done:'2026-06-05',justify:'',responsable:'Joaco'},
-          {id:'as-2',name:'Conciliación de Integridad',status:'done',eta:'2026-06-08',done:'2026-06-12',justify:'Demora en provisión de datos crudos por parte de soporte técnico.',responsable:'Joaco'},
-          {id:'as-3',name:'Conciliación Bank',status:'done',eta:'2026-06-10',done:'2026-06-13',justify:'Descuadre inicial en saldo inicial de extracto bancario.',responsable:'Joaco'},
-          {id:'as-4',name:'Conciliación Model',status:'wip',eta:'2026-06-15',done:null,justify:'',responsable:'Joaco'},
-          {id:'as-5',name:'Traductor contable (Serialización)',status:'pending',eta:'2026-06-20',done:null,justify:'',responsable:'Joaco'},
-          {id:'as-6',name:'Control manual (Serialización)',status:'pending',eta:'2026-06-22',done:null,justify:'',responsable:'Joaco'},
-          {id:'as-7',name:'Sign-Off (SO) de Serialización',status:'pending',eta:'2026-06-25',done:null,justify:'',responsable:'Joaco'},
+          {id:'as-1',name:'Pedido de lógicas V1',status:'done',eta:'2026-06-05',done:'2026-06-05',justify:'',responsable:'Joaco R'},
+          {id:'as-2',name:'Conciliación de Integridad',status:'done',eta:'2026-06-08',done:'2026-06-12',justify:'Demora en provisión de datos crudos por parte de soporte técnico.',responsable:'Joaco R'},
+          {id:'as-3',name:'Conciliación Bank',status:'done',eta:'2026-06-10',done:'2026-06-13',justify:'Descuadre inicial en saldo inicial de extracto bancario.',responsable:'Joaco R'},
+          {id:'as-4',name:'Conciliación Model',status:'wip',eta:'2026-06-15',done:null,justify:'',responsable:'Joaco R'},
+          {id:'as-5',name:'Traductor contable (Serialización)',status:'pending',eta:'2026-06-20',done:null,justify:'',responsable:'Joaco R'},
+          {id:'as-6',name:'Control manual (Serialización)',status:'pending',eta:'2026-06-22',done:null,justify:'',responsable:'Joaco R'},
+          {id:'as-7',name:'Sign-Off (SO) de Serialización',status:'pending',eta:'2026-06-25',done:null,justify:'',responsable:'Joaco R'},
         ]
       },
       {id:'alipay-m10',name:'M10',
         actividades:[
-          {id:'am10-1',name:'Validación de movimientos vs mp_source',status:'pending',eta:'2026-07-18',done:null,justify:'',responsable:'Joaco'},
-          {id:'am10-2',name:'Conciliación Dummy (M10)',status:'pending',eta:'2026-07-19',done:null,justify:'',responsable:'Joaco'},
-          {id:'am10-3',name:'Traductor contable (M10)',status:'pending',eta:'2026-07-20',done:null,justify:'',responsable:'Joaco'},
-          {id:'am10-4',name:'Control manual (M10)',status:'pending',eta:'2026-07-21',done:null,justify:'',responsable:'Joaco'},
-          {id:'am10-5',name:'Sign-Off (SO) de M10',status:'pending',eta:'2026-07-22',done:null,justify:'',responsable:'Joaco'},
+          {id:'am10-1',name:'Validación de movimientos vs mp_source',status:'pending',eta:'2026-07-18',done:null,justify:'',responsable:'Joaco R'},
+          {id:'am10-2',name:'Conciliación Dummy (M10)',status:'pending',eta:'2026-07-19',done:null,justify:'',responsable:'Joaco R'},
+          {id:'am10-3',name:'Traductor contable (M10)',status:'pending',eta:'2026-07-20',done:null,justify:'',responsable:'Joaco R'},
+          {id:'am10-4',name:'Control manual (M10)',status:'pending',eta:'2026-07-21',done:null,justify:'',responsable:'Joaco R'},
+          {id:'am10-5',name:'Sign-Off (SO) de M10',status:'pending',eta:'2026-07-22',done:null,justify:'',responsable:'Joaco R'},
         ]
       },
       {id:'alipay-m2070',name:'M20/70',
         actividades:[
-          {id:'am20-1',name:'Conciliación Dummy (M20/70)',status:'pending',eta:'2026-07-25',done:null,justify:'',responsable:'Joaco'},
-          {id:'am20-2',name:'Traductor contable (M20/70)',status:'pending',eta:'2026-07-26',done:null,justify:'',responsable:'Joaco'},
-          {id:'am20-3',name:'Control manual (M20/70)',status:'pending',eta:'2026-07-28',done:null,justify:'',responsable:'Joaco'},
-          {id:'am20-4',name:'Sign-Off (SO) de M20/70',status:'pending',eta:'2026-07-30',done:null,justify:'',responsable:'Joaco'},
+          {id:'am20-1',name:'Conciliación Dummy (M20/70)',status:'pending',eta:'2026-07-25',done:null,justify:'',responsable:'Joaco R'},
+          {id:'am20-2',name:'Traductor contable (M20/70)',status:'pending',eta:'2026-07-26',done:null,justify:'',responsable:'Joaco R'},
+          {id:'am20-3',name:'Control manual (M20/70)',status:'pending',eta:'2026-07-28',done:null,justify:'',responsable:'Joaco R'},
+          {id:'am20-4',name:'Sign-Off (SO) de M20/70',status:'pending',eta:'2026-07-30',done:null,justify:'',responsable:'Joaco R'},
         ]
       },
       {id:'alipay-m50',name:'M50',
         actividades:[
-          {id:'am50-1',name:'Carga de ajustes en template (M50)',status:'pending',eta:'2026-08-03',done:null,justify:'',responsable:'Joaco'},
-          {id:'am50-2',name:'Transformadas en dummy (M50)',status:'pending',eta:'2026-08-04',done:null,justify:'',responsable:'Joaco'},
-          {id:'am50-3',name:'Configuración ZFI (M50)',status:'pending',eta:'2026-08-06',done:null,justify:'',responsable:'Joaco'},
-          {id:'am50-4',name:'Traductor contable (M50)',status:'pending',eta:'2026-08-07',done:null,justify:'',responsable:'Joaco'},
-          {id:'am50-5',name:'Control manual (M50)',status:'pending',eta:'2026-08-09',done:null,justify:'',responsable:'Joaco'},
-          {id:'am50-6',name:'Sign-Off (SO) de M50',status:'pending',eta:'2026-08-10',done:null,justify:'',responsable:'Joaco'},
+          {id:'am50-1',name:'Carga de ajustes en template (M50)',status:'pending',eta:'2026-08-03',done:null,justify:'',responsable:'Joaco R'},
+          {id:'am50-2',name:'Transformadas en dummy (M50)',status:'pending',eta:'2026-08-04',done:null,justify:'',responsable:'Joaco R'},
+          {id:'am50-3',name:'Configuración ZFI (M50)',status:'pending',eta:'2026-08-06',done:null,justify:'',responsable:'Joaco R'},
+          {id:'am50-4',name:'Traductor contable (M50)',status:'pending',eta:'2026-08-07',done:null,justify:'',responsable:'Joaco R'},
+          {id:'am50-5',name:'Control manual (M50)',status:'pending',eta:'2026-08-09',done:null,justify:'',responsable:'Joaco R'},
+          {id:'am50-6',name:'Sign-Off (SO) de M50',status:'pending',eta:'2026-08-10',done:null,justify:'',responsable:'Joaco R'},
         ]
       },
       {id:'alipay-tableros',name:'Tableros',
         actividades:[
-          {id:'atb-1',name:'Pedido de export de modelos y armado de templates (B&A)',status:'pending',eta:'2026-08-24',done:null,justify:'',responsable:'Joaco'},
-          {id:'atb-2',name:'Reunión de KO (Kick-Off) con el equipo de B&A',status:'pending',eta:'2026-08-26',done:null,justify:'',responsable:'Joaco'},
-          {id:'atb-3',name:'Sign-Off (SO) del Tablero final por B&A',status:'pending',eta:'2026-08-28',done:null,justify:'',responsable:'Joaco'},
+          {id:'atb-1',name:'Pedido de export de modelos y armado de templates (B&A)',status:'pending',eta:'2026-08-24',done:null,justify:'',responsable:'Joaco R'},
+          {id:'atb-2',name:'Reunión de KO (Kick-Off) con el equipo de B&A',status:'pending',eta:'2026-08-26',done:null,justify:'',responsable:'Joaco R'},
+          {id:'atb-3',name:'Sign-Off (SO) del Tablero final por B&A',status:'pending',eta:'2026-08-28',done:null,justify:'',responsable:'Joaco R'},
         ]
       },
       {id:'alipay-encendido',name:'Encendido',
         actividades:[
-          {id:'aen-1',name:'Validación de fuentes',status:'pending',eta:'2026-09-02',done:null,justify:'',responsable:'Joaco'},
-          {id:'aen-2',name:'Encendido de TC',status:'pending',eta:'2026-09-03',done:null,justify:'',responsable:'Joaco'},
-          {id:'aen-3',name:'Estabilización',status:'pending',eta:'2026-09-04',done:null,justify:'',responsable:'Joaco'},
-          {id:'aen-4',name:'Traspaso',status:'pending',eta:'2026-09-04',done:null,justify:'',responsable:'Joaco'},
-          {id:'aen-5',name:'Mail de traspaso',status:'pending',eta:'2026-09-05',done:null,justify:'',responsable:'Joaco'},
-          {id:'aen-6',name:'OK mail de traspaso',status:'pending',eta:'2026-09-05',done:null,justify:'',responsable:'Joaco'},
+          {id:'aen-1',name:'Validación de fuentes',status:'pending',eta:'2026-09-02',done:null,justify:'',responsable:'Joaco R'},
+          {id:'aen-2',name:'Encendido de TC',status:'pending',eta:'2026-09-03',done:null,justify:'',responsable:'Joaco R'},
+          {id:'aen-3',name:'Estabilización',status:'pending',eta:'2026-09-04',done:null,justify:'',responsable:'Joaco R'},
+          {id:'aen-4',name:'Traspaso',status:'pending',eta:'2026-09-04',done:null,justify:'',responsable:'Joaco R'},
+          {id:'aen-5',name:'Mail de traspaso',status:'pending',eta:'2026-09-05',done:null,justify:'',responsable:'Joaco R'},
+          {id:'aen-6',name:'OK mail de traspaso',status:'pending',eta:'2026-09-05',done:null,justify:'',responsable:'Joaco R'},
         ]
       },
     ]
@@ -510,7 +513,7 @@ function renderFlujos(){
             <i class="fa-solid ${s.pct===100?'fa-check':f.icon}" style="font-size:${isCompact?'11':'12'}px;color:${s.pct===100?'var(--green)':'var(--text-dim)'};"></i>
           </div>
           <div>
-            <div style="font-size:13px;font-weight:${isCompact?'500':'600'};">${f.name}</div>
+            <div style="font-size:13px;font-weight:${isCompact?'500':'600'};">${f.name}${f.reconId?` <span style="font-size:10px;font-weight:500;color:var(--text-muted);background:rgba(100,116,139,0.1);border:1px solid var(--border-light);padding:1px 6px;border-radius:4px;">${f.reconId}</span>`:''}</div>
             <div style="font-size:11px;color:var(--text-muted);margin-top:2px;display:flex;align-items:center;gap:6px;">
               Encendido: ${fmt(f.encendido)}
               ${f.responsable&&f.responsable!=='—'?`<span style="display:inline-flex;align-items:center;gap:3px;padding:1px 7px;border-radius:99px;font-size:10px;font-weight:600;background:${ANALISTA_BG[f.responsable]||'rgba(100,116,139,0.1)'};color:${ANALISTA_COLORS[f.responsable]||'var(--text-muted)'};">${f.responsable}</span>`:''}
@@ -756,12 +759,12 @@ function exportCSV(){
   const k=globalKPIs();
   let warn='';
   if(k.unjust>0) warn=`# ADVERTENCIA: ${k.unjust} desvío(s) sin justificar\n`;
-  let rows=[warn+'Flujo,Modelo,Actividad,Responsable,Estado,ETA,Fecha Real,Desvío (días),Justificación'];
+  let rows=[warn+'Flujo,RECON_ID,Modelo,Actividad,Responsable,Estado,ETA,Fecha Real,Desvío (días),Justificación'];
   flujos.forEach(f=>{
     f.modelos.forEach(m=>{
       m.actividades.forEach(a=>{
         const d=getDeviation(a);
-        rows.push(`"${f.name}","${m.name}","${a.name}","${a.responsable||'—'}","${a.status}","${a.eta||''}","${a.done||''}","${d!==null?d:''}","${a.justify||''}"`);
+        rows.push(`"${f.name}","${f.reconId||''}","${m.name}","${a.name}","${a.responsable||'—'}","${a.status}","${a.eta||''}","${a.done||''}","${d!==null?d:''}","${a.justify||''}"`);
       });
     });
   });
@@ -947,8 +950,10 @@ function parseNL(text){
   }
   // Identificar flujo — búsqueda dinámica sobre todos los flujos cargados
   let targetFlujo=null;
-  // Primer intento: alguna palabra del nombre del flujo (>3 chars) aparece en el mensaje
-  flujos.forEach(f=>{
+  // Primer intento: RECON_ID exacto
+  flujos.forEach(f=>{if(f.reconId&&lower.includes(f.reconId.toLowerCase())) targetFlujo=f;});
+  // Segundo: alguna palabra del nombre del flujo (>3 chars) aparece en el mensaje
+  if(!targetFlujo) flujos.forEach(f=>{
     const parts=f.name.toLowerCase().split(/[\s\-\/]+/);
     if(parts.some(p=>p.length>3&&lower.includes(p))) targetFlujo=f;
   });
@@ -964,27 +969,43 @@ function parseNL(text){
     const nombres=flujos.map(f=>f.name.replace(/^E2E\s*/i,'')).join(', ');
     return{type:'error',response:`No pude identificar el flujo en el mensaje. Flujos disponibles: <b>${nombres||'ninguno cargado'}</b>`};
   }
-  // Identificar modelo
+  // Identificar modelo — búsqueda directa por nombre real del modelo
   let targetModelo=null;
-  const mKeys=[{k:'validaci',n:'fuentes'},{k:'fuente',n:'fuentes'},{k:'modelo 10',n:'mod10'},{k:'mod 10',n:'mod10'},{k:'model 10',n:'mod10'},{k:'modelo 20',n:'mod20'},{k:'mod 20',n:'mod20'},{k:'modelo 50',n:'mod50'},{k:'modelo 70',n:'mod70'},{k:'serial',n:'serial'},{k:'tablero',n:'tablero'},{k:'dashboard',n:'tablero'},{k:'tch',n:'tch'},{k:'sign',n:'signoff'}];
-  let mKey=null;mKeys.forEach(mk=>{if(lower.includes(mk.k))mKey=mk.n;});
-  if(mKey) targetModelo=targetFlujo.modelos.find(m=>m.id.includes(mKey)||m.name.toLowerCase().includes(mKey.replace('mod','modelo ')));
-  if(!targetModelo&&mKey){
-    const map={fuentes:'Validación',mod10:'10',mod20:'20',mod50:'50',serial:'Serial',tablero:'Tablero',tch:'TCH',signoff:'Sign'};
-    const hint=map[mKey]||mKey;
-    targetModelo=targetFlujo.modelos.find(m=>m.name.toLowerCase().includes(hint.toLowerCase()));
+  // Busca el modelo cuyo nombre tenga mayor overlap con el mensaje
+  let bestScore=0;
+  targetFlujo.modelos.forEach(m=>{
+    const mn=m.name.toLowerCase().replace(/[\/\s]+/g,' ');
+    const words=mn.split(' ').filter(w=>w.length>1);
+    const score=words.filter(w=>lower.includes(w)).length;
+    if(score>bestScore){bestScore=score;targetModelo=m;}
+  });
+  // También matchea RECON_ID si lo mencionan
+  if(targetFlujo.reconId&&lower.includes(targetFlujo.reconId.toLowerCase())) targetModelo=targetModelo||targetFlujo.modelos[0];
+  if(!targetModelo||bestScore===0){
+    const mods=targetFlujo.modelos.map(m=>m.name).join(', ');
+    return{type:'error',response:`Identifiqué el flujo <b>${targetFlujo.name}</b> pero no el modelo. Modelos disponibles: <b>${mods}</b>`};
   }
-  if(!targetModelo) return{type:'error',response:`Identifiqué el flujo <b>${targetFlujo.name}</b> pero no el modelo. ¿Podés ser más específico?`};
-  // Identificar actividad (primera wip o pending)
+  // Identificar acción
   const isComplete=lower.includes('complet')||lower.includes('terminé')||lower.includes('finaliz')||lower.includes('listo')||lower.includes('hecho');
   const isWip=lower.includes('proceso')||lower.includes('wip')||lower.includes('inicio')||lower.includes('inicié');
   const delayMatch=lower.match(/(\d+)\s*d[ií]a/);
   const causeMatch=text.match(/por\s+(.{5,80}?)(?:\.|,|$)/i);
   const days=delayMatch?parseInt(delayMatch[1]):0;
   const cause=causeMatch?causeMatch[1].trim():null;
-  // Find target act
-  let targetAct=targetModelo.actividades.find(a=>a.status==='wip')||targetModelo.actividades.find(a=>a.status==='pending');
-  if(isComplete&&targetAct){
+  // Identificar actividad específica por nombre, si la mencionan
+  let targetAct=null;
+  let bestActScore=0;
+  targetModelo.actividades.forEach(a=>{
+    const an=a.name.toLowerCase();
+    const words=an.split(/[\s\(\)\/]+/).filter(w=>w.length>3);
+    const score=words.filter(w=>lower.includes(w)).length;
+    if(score>bestActScore){bestActScore=score;targetAct=a;}
+  });
+  // Si no se identificó actividad específica, tomar la primera wip o pending
+  if(!targetAct||bestActScore===0)
+    targetAct=targetModelo.actividades.find(a=>a.status==='wip')||targetModelo.actividades.find(a=>a.status==='pending');
+  if(!targetAct) return{type:'error',response:`Todas las actividades de <b>${targetModelo.name}</b> ya están completadas.`};
+  if(isComplete){
     targetAct.status='done';targetAct.done=todayStr();
     if(days>0&&cause) targetAct.justify=`Demoró ${days} días: ${cause}.`;
     else if(days>0) targetAct.justify=`Demora de ${days} días (sin detalle).`;
@@ -992,11 +1013,11 @@ function parseNL(text){
     const dev=getDeviation(targetAct);
     return{type:'success',response:`✅ <b>${targetAct.name}</b> en <b>${targetModelo.name}</b> (${targetFlujo.name}) marcado como Completado.<br>Fecha real: ${fmt(targetAct.done)}<br>${dev>0?`Desvío: <span style="color:var(--red);">+${dev}d</span>`:'Sin desvío.'}<br>${targetAct.justify?`Justificación: <em>${targetAct.justify}</em>`:''}`};
   }
-  if(isWip&&targetAct){
+  if(isWip){
     targetAct.status='wip';renderAll();
     return{type:'success',response:`🔄 <b>${targetAct.name}</b> en <b>${targetModelo.name}</b> marcado como En proceso.`};
   }
-  return{type:'error',response:`Identifiqué <b>${targetFlujo.name} → ${targetModelo.name}</b> pero no pude determinar la acción. ¿Querés completar o iniciar?`};
+  return{type:'error',response:`Identifiqué <b>${targetFlujo.name} → ${targetModelo.name} → ${targetAct.name}</b> pero no pude determinar la acción. ¿Querés completar o iniciar?`};
 }
 function parseDateArg(str){
   const p=str.split(/[\/\-]/);
@@ -1051,6 +1072,7 @@ function preseleccionarModelos(arquetipo){
 
 function crearFlujo(){
   const nombre=document.getElementById('nf-nombre').value.trim();
+  const reconId=document.getElementById('nf-recon').value.trim();
   const encendido=document.getElementById('nf-encendido').value;
   const responsable=document.getElementById('nf-responsable').value||'—';
   const arquetipo=document.getElementById('nf-arquetipo').value||'BT';
@@ -1070,10 +1092,11 @@ function crearFlujo(){
     modelos.push({id:key+'-'+Date.now(),name:MASTER_NOMBRES[key]||key,actividades:acts});
     etaOffset+=acts.length*2+5;
   });
-  flujos.push({id:nombre.toLowerCase().replace(/\s+/g,'-')+'-'+Date.now(),name:nombre,icon,encendido,responsable,arquetipo,modelos});
+  flujos.push({id:nombre.toLowerCase().replace(/\s+/g,'-')+'-'+Date.now(),name:nombre,icon,encendido,responsable,arquetipo,reconId,modelos});
   closeModal();renderAll();
   showToast(`✓ Flujo "${nombre}" creado — ${modelos.length} modelos, arquetipo ${arquetipo}`,'green');
   document.getElementById('nf-nombre').value='';
+  document.getElementById('nf-recon').value='';
   document.getElementById('nf-encendido').value='';
   document.getElementById('nf-arquetipo').value='';
   preseleccionarModelos('');
