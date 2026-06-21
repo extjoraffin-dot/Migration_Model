@@ -915,8 +915,11 @@ function addChatMsg(text,role){
 // Contexto retenido entre mensajes del chat
 let chatCtx={flujo:null, modelo:null};
 
+// Normaliza texto: minúsculas + sin tildes
+function norm(s){return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');}
+
 function parseNL(text){
-  const lower=text.toLowerCase();
+  const lower=norm(text);
   // Query
   if((lower.includes('desvío')||lower.includes('desvio'))&&(lower.includes('ver')||lower.includes('qué')||lower.includes('sin justif'))){
     let res='<b>Desvíos sin justificar:</b><br>';let found=false;
@@ -952,51 +955,48 @@ function parseNL(text){
     flujos.push(newFlujo);renderAll();
     return{type:'success',response:`✅ Flujo <b>${newFlujo.name}</b> creado con ${mods.length} modelos y fecha de encendido <b>${fmt(newFlujo.encendido)}</b>. Podés verlo en la tabla de Flujos E2E.`};
   }
-  // Identificar flujo — búsqueda dinámica + fallback a contexto previo
+  // Identificar flujo — norm() en comparaciones para ignorar tildes
   let targetFlujo=null;
-  flujos.forEach(f=>{if(f.reconId&&lower.includes(f.reconId.toLowerCase())) targetFlujo=f;});
+  flujos.forEach(f=>{if(f.reconId&&lower.includes(norm(f.reconId))) targetFlujo=f;});
   if(!targetFlujo) flujos.forEach(f=>{
-    const parts=f.name.toLowerCase().split(/[\s\-\/]+/);
+    const parts=norm(f.name).split(/[\s\-\/]+/);
     if(parts.some(p=>p.length>3&&lower.includes(p))) targetFlujo=f;
   });
   if(!targetFlujo){
     flujos.forEach(f=>{
-      const n=f.name.toLowerCase().replace(/e2e\s*/,'');
+      const n=norm(f.name).replace(/e2e\s*/,'');
       const words=n.split(/[\s\-\/]+/).filter(p=>p.length>3);
       if(words.some(p=>lower.includes(p))) targetFlujo=f;
     });
   }
-  // Fallback: usar flujo del contexto previo
   if(!targetFlujo&&chatCtx.flujo) targetFlujo=chatCtx.flujo;
   if(!targetFlujo){
     const nombres=flujos.map(f=>f.name.replace(/^E2E\s*/i,'')).join(', ');
     return{type:'error',response:`No pude identificar el flujo. Flujos disponibles: <b>${nombres||'ninguno cargado'}</b>`};
   }
-  // Guardar flujo en contexto
   chatCtx.flujo=targetFlujo;
 
-  // Identificar modelo — búsqueda por nombre real + fallback a contexto previo
+  // Identificar modelo — norm() + score por palabras
   let targetModelo=null;
   let bestScore=0;
   targetFlujo.modelos.forEach(m=>{
-    const mn=m.name.toLowerCase().replace(/[\/\s]+/g,' ');
+    const mn=norm(m.name).replace(/[\/\s]+/g,' ');
     const words=mn.split(' ').filter(w=>w.length>1);
     const score=words.filter(w=>lower.includes(w)).length;
     if(score>bestScore){bestScore=score;targetModelo=m;}
   });
-  if(targetFlujo.reconId&&lower.includes(targetFlujo.reconId.toLowerCase())) targetModelo=targetModelo||targetFlujo.modelos[0];
-  // Fallback: usar modelo del contexto previo (solo si es del mismo flujo)
+  if(targetFlujo.reconId&&lower.includes(norm(targetFlujo.reconId))) targetModelo=targetModelo||targetFlujo.modelos[0];
   if((!targetModelo||bestScore===0)&&chatCtx.modelo&&targetFlujo.modelos.find(m=>m.id===chatCtx.modelo.id))
     targetModelo=chatCtx.modelo;
   if(!targetModelo){
     const mods=targetFlujo.modelos.map(m=>m.name).join(', ');
-    return{type:'error',response:`Identifiqué el flujo <b>${targetFlujo.name}</b> pero no el modelo. Modelos disponibles: <b>${mods}</b>`};
+    return{type:'error',response:`Identifiqué el flujo <b>${targetFlujo.name}</b> pero no el modelo. Modelos: <b>${mods}</b>`};
   }
-  // Guardar modelo en contexto
   chatCtx.modelo=targetModelo;
+
   // Identificar acción
-  const isComplete=lower.includes('complet')||lower.includes('terminé')||lower.includes('finaliz')||lower.includes('listo')||lower.includes('hecho');
-  const isWip=lower.includes('proceso')||lower.includes('wip')||lower.includes('inicio')||lower.includes('inicié');
+  const isComplete=lower.includes('complet')||lower.includes('termine')||lower.includes('finaliz')||lower.includes('listo')||lower.includes('hecho');
+  const isWip=lower.includes('proceso')||lower.includes('wip')||lower.includes('inicio')||lower.includes('inicie');
   const delayMatch=lower.match(/(\d+)\s*d[ií]a/);
   const causeMatch=text.match(/por\s+(.{5,80}?)(?:\.|,|$)/i);
   const days=delayMatch?parseInt(delayMatch[1]):0;
@@ -1005,31 +1005,31 @@ function parseNL(text){
   let targetAct=null;
   let bestActScore=0;
   targetModelo.actividades.forEach(a=>{
-    const an=a.name.toLowerCase();
+    const an=norm(a.name);
     const words=an.split(/[\s\(\)\/]+/).filter(w=>w.length>3);
     const score=words.filter(w=>lower.includes(w)).length;
     if(score>bestActScore){bestActScore=score;targetAct=a;}
   });
-  // Si no se identificó actividad específica, tomar la primera wip o pending
   if(!targetAct||bestActScore===0)
     targetAct=targetModelo.actividades.find(a=>a.status==='wip')||targetModelo.actividades.find(a=>a.status==='pending');
   if(!targetAct) return{type:'error',response:`Todas las actividades de <b>${targetModelo.name}</b> ya están completadas.`};
+
+  // Confirmación de lo entendido
+  const entendi=`<span style="font-size:11px;color:var(--text-muted);">📌 Entendí: <b>${targetFlujo.name.replace(/^E2E\s*/i,'')}</b> → <b>${targetModelo.name}</b> → <b>${targetAct.name}</b></span><br>`;
+
   if(isComplete){
     targetAct.status='done';targetAct.done=todayStr();
     if(days>0&&cause) targetAct.justify=`Demoró ${days} días: ${cause}.`;
     else if(days>0) targetAct.justify=`Demora de ${days} días (sin detalle).`;
     renderAll();
     const dev=getDeviation(targetAct);
-    const ctx=`<br><span style="font-size:11px;color:var(--text-muted);">📌 Contexto activo: ${targetFlujo.name.replace(/^E2E\s*/i,'')} → ${targetModelo.name}</span>`;
-    return{type:'success',response:`✅ <b>${targetAct.name}</b> en <b>${targetModelo.name}</b> marcado como Completado.<br>Fecha real: ${fmt(targetAct.done)}<br>${dev>0?`Desvío: <span style="color:var(--red);">+${dev}d</span>`:'Sin desvío.'}<br>${targetAct.justify?`Justificación: <em>${targetAct.justify}</em>`:''}`+ctx};
+    return{type:'success',response:entendi+`✅ Marcado como DONE.<br>Fecha real: ${fmt(targetAct.done)}<br>${dev>0?`Desvío: <span style="color:var(--red);">+${dev}d</span>`:'Sin desvío.'}<br>${targetAct.justify?`Justificación: <em>${targetAct.justify}</em>`:''}`};
   }
   if(isWip){
     targetAct.status='wip';renderAll();
-    const ctx=`<br><span style="font-size:11px;color:var(--text-muted);">📌 Contexto activo: ${targetFlujo.name.replace(/^E2E\s*/i,'')} → ${targetModelo.name}</span>`;
-    return{type:'success',response:`🔄 <b>${targetAct.name}</b> en <b>${targetModelo.name}</b> marcado como En proceso.`+ctx};
+    return{type:'success',response:entendi+`🔄 Marcado como WIP.`};
   }
-  const ctx=`<br><span style="font-size:11px;color:var(--text-muted);">📌 Contexto activo: ${targetFlujo.name.replace(/^E2E\s*/i,'')} → ${targetModelo.name}</span>`;
-  return{type:'error',response:`Identifiqué <b>${targetFlujo.name} → ${targetModelo.name} → ${targetAct.name}</b> pero no pude determinar la acción. ¿Querés completar o iniciar?`+ctx};
+  return{type:'error',response:entendi+`No pude determinar la acción. ¿Querés marcarlo como WIP o DONE?`};
 }
 function parseDateArg(str){
   const p=str.split(/[\/\-]/);
