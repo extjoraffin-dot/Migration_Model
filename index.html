@@ -918,6 +918,40 @@ let chatCtx={flujo:null, modelo:null};
 // Normaliza texto: minúsculas + sin tildes
 function norm(s){return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');}
 
+// Distancia de edición (Levenshtein) entre dos strings
+function editDist(a,b){
+  const m=a.length,n=b.length;
+  const dp=Array.from({length:m+1},(_,i)=>[i,...Array(n).fill(0)]);
+  for(let j=0;j<=n;j++) dp[0][j]=j;
+  for(let i=1;i<=m;i++) for(let j=1;j<=n;j++)
+    dp[i][j]=a[i-1]===b[j-1]?dp[i-1][j-1]:1+Math.min(dp[i-1][j],dp[i][j-1],dp[i-1][j-1]);
+  return dp[m][n];
+}
+
+// Score de similitud fuzzy entre una palabra del mensaje y una palabra del target
+// Retorna 0-1: 1 = match exacto, 0 = sin relación
+function fuzzyWordScore(query,target){
+  if(target.includes(query)||query.includes(target)) return 1;
+  const maxLen=Math.max(query.length,target.length);
+  if(maxLen===0) return 1;
+  const dist=editDist(query,target);
+  const tolerance=query.length<=4?1:query.length<=7?2:3;
+  return dist<=tolerance?(1-dist/maxLen):0;
+}
+
+// Score fuzzy total entre un mensaje (lower) y un nombre candidato
+function fuzzyScore(lower,name){
+  const queryWords=lower.split(/[\s\(\)\/\-]+/).filter(w=>w.length>2);
+  const targetWords=norm(name).split(/[\s\(\)\/\-]+/).filter(w=>w.length>1);
+  if(!queryWords.length||!targetWords.length) return 0;
+  let total=0;
+  queryWords.forEach(qw=>{
+    const best=Math.max(...targetWords.map(tw=>fuzzyWordScore(qw,tw)));
+    total+=best;
+  });
+  return total/queryWords.length;
+}
+
 function parseNL(text){
   const lower=norm(text);
   // Query
@@ -955,18 +989,14 @@ function parseNL(text){
     flujos.push(newFlujo);renderAll();
     return{type:'success',response:`✅ Flujo <b>${newFlujo.name}</b> creado con ${mods.length} modelos y fecha de encendido <b>${fmt(newFlujo.encendido)}</b>. Podés verlo en la tabla de Flujos E2E.`};
   }
-  // Identificar flujo — norm() en comparaciones para ignorar tildes
+  // Identificar flujo — RECON_ID exacto primero, luego fuzzy por nombre
   let targetFlujo=null;
   flujos.forEach(f=>{if(f.reconId&&lower.includes(norm(f.reconId))) targetFlujo=f;});
-  if(!targetFlujo) flujos.forEach(f=>{
-    const parts=norm(f.name).split(/[\s\-\/]+/);
-    if(parts.some(p=>p.length>3&&lower.includes(p))) targetFlujo=f;
-  });
   if(!targetFlujo){
+    let best=0;
     flujos.forEach(f=>{
-      const n=norm(f.name).replace(/e2e\s*/,'');
-      const words=n.split(/[\s\-\/]+/).filter(p=>p.length>3);
-      if(words.some(p=>lower.includes(p))) targetFlujo=f;
+      const s=fuzzyScore(lower,f.name.replace(/^E2E\s*/i,''));
+      if(s>best&&s>0.4){best=s;targetFlujo=f;}
     });
   }
   if(!targetFlujo&&chatCtx.flujo) targetFlujo=chatCtx.flujo;
@@ -976,17 +1006,15 @@ function parseNL(text){
   }
   chatCtx.flujo=targetFlujo;
 
-  // Identificar modelo — norm() + score por palabras
+  // Identificar modelo — fuzzy por nombre
   let targetModelo=null;
   let bestScore=0;
   targetFlujo.modelos.forEach(m=>{
-    const mn=norm(m.name).replace(/[\/\s]+/g,' ');
-    const words=mn.split(' ').filter(w=>w.length>1);
-    const score=words.filter(w=>lower.includes(w)).length;
-    if(score>bestScore){bestScore=score;targetModelo=m;}
+    const s=fuzzyScore(lower,m.name);
+    if(s>bestScore){bestScore=s;targetModelo=m;}
   });
   if(targetFlujo.reconId&&lower.includes(norm(targetFlujo.reconId))) targetModelo=targetModelo||targetFlujo.modelos[0];
-  if((!targetModelo||bestScore===0)&&chatCtx.modelo&&targetFlujo.modelos.find(m=>m.id===chatCtx.modelo.id))
+  if((!targetModelo||bestScore<0.3)&&chatCtx.modelo&&targetFlujo.modelos.find(m=>m.id===chatCtx.modelo.id))
     targetModelo=chatCtx.modelo;
   if(!targetModelo){
     const mods=targetFlujo.modelos.map(m=>m.name).join(', ');
@@ -1005,12 +1033,10 @@ function parseNL(text){
   let targetAct=null;
   let bestActScore=0;
   targetModelo.actividades.forEach(a=>{
-    const an=norm(a.name);
-    const words=an.split(/[\s\(\)\/]+/).filter(w=>w.length>3);
-    const score=words.filter(w=>lower.includes(w)).length;
-    if(score>bestActScore){bestActScore=score;targetAct=a;}
+    const s=fuzzyScore(lower,a.name);
+    if(s>bestActScore){bestActScore=s;targetAct=a;}
   });
-  if(!targetAct||bestActScore===0)
+  if(!targetAct||bestActScore<0.25)
     targetAct=targetModelo.actividades.find(a=>a.status==='wip')||targetModelo.actividades.find(a=>a.status==='pending');
   if(!targetAct) return{type:'error',response:`Todas las actividades de <b>${targetModelo.name}</b> ya están completadas.`};
 
