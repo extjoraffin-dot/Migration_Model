@@ -934,7 +934,7 @@ function addChatMsg(text,role){
 }
 
 // Contexto retenido entre mensajes del chat
-let chatCtx={flujo:null, modelo:null};
+let chatCtx={flujo:null, modelo:null, pending:null};
 
 // Normaliza texto: minúsculas + sin tildes
 function norm(s){return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');}
@@ -973,8 +973,38 @@ function fuzzyScore(lower,name){
   return total/queryWords.length;
 }
 
+function execPending(){
+  const p=chatCtx.pending;
+  if(!p) return;
+  chatCtx.pending=null;
+  if(p.action==='done'){
+    p.act.status='done';p.act.done=todayStr();
+    if(p.justify) p.act.justify=p.justify;
+    renderAll();
+    const dev=getDeviation(p.act);
+    return{type:'success',response:`✅ <b>${p.act.name}</b> marcado como DONE.<br>Fecha real: ${fmt(p.act.done)}<br>${dev>0?`Desvío: <span style="color:var(--red);">+${dev}d</span>`:'Sin desvío.'}<br>${p.act.justify?`Justificación: <em>${p.act.justify}</em>`:''}`};
+  }
+  if(p.action==='wip'){
+    p.act.status='wip';renderAll();
+    return{type:'success',response:`🔄 <b>${p.act.name}</b> marcado como WIP.`};
+  }
+}
+
 function parseNL(text){
   const lower=norm(text);
+
+  // Confirmación de acción pendiente
+  if(chatCtx.pending){
+    if(/^(si|sí|ok|dale|confirm|correcto|exacto|yes)/.test(lower)){
+      return execPending();
+    } else if(/^(no|cancel|incorrecto|mal)/.test(lower)){
+      chatCtx.pending=null;
+      return{type:'error',response:'Cancelado. ¿Qué querés hacer?'};
+    }
+    // Si manda otro mensaje distinto, cancela el pending y procesa el nuevo
+    chatCtx.pending=null;
+  }
+
   // Query
   if((lower.includes('desvío')||lower.includes('desvio'))&&(lower.includes('ver')||lower.includes('qué')||lower.includes('sin justif'))){
     let res='<b>Desvíos sin justificar:</b><br>';let found=false;
@@ -1061,22 +1091,18 @@ function parseNL(text){
     targetAct=targetModelo.actividades.find(a=>a.status==='wip')||targetModelo.actividades.find(a=>a.status==='pending');
   if(!targetAct) return{type:'error',response:`Todas las actividades de <b>${targetModelo.name}</b> ya están completadas.`};
 
-  // Confirmación de lo entendido
-  const entendi=`<span style="font-size:11px;color:var(--text-muted);">📌 Entendí: <b>${targetFlujo.name.replace(/^E2E\s*/i,'')}</b> → <b>${targetModelo.name}</b> → <b>${targetAct.name}</b></span><br>`;
+  const entendi=`📌 Entendí: <b>${targetFlujo.name.replace(/^E2E\s*/i,'')}</b> → <b>${targetModelo.name}</b> → <b>${targetAct.name}</b>`;
+  const justify=days>0&&cause?`Demoró ${days} días: ${cause}.`:days>0?`Demora de ${days} días (sin detalle).`:'';
 
   if(isComplete){
-    targetAct.status='done';targetAct.done=todayStr();
-    if(days>0&&cause) targetAct.justify=`Demoró ${days} días: ${cause}.`;
-    else if(days>0) targetAct.justify=`Demora de ${days} días (sin detalle).`;
-    renderAll();
-    const dev=getDeviation(targetAct);
-    return{type:'success',response:entendi+`✅ Marcado como DONE.<br>Fecha real: ${fmt(targetAct.done)}<br>${dev>0?`Desvío: <span style="color:var(--red);">+${dev}d</span>`:'Sin desvío.'}<br>${targetAct.justify?`Justificación: <em>${targetAct.justify}</em>`:''}`};
+    chatCtx.pending={action:'done',act:targetAct,justify};
+    return{type:'query',response:entendi+`<br>¿Marco como <b>DONE</b>? (sí / no)`};
   }
   if(isWip){
-    targetAct.status='wip';renderAll();
-    return{type:'success',response:entendi+`🔄 Marcado como WIP.`};
+    chatCtx.pending={action:'wip',act:targetAct};
+    return{type:'query',response:entendi+`<br>¿Marco como <b>WIP</b>? (sí / no)`};
   }
-  return{type:'error',response:entendi+`No pude determinar la acción. ¿Querés marcarlo como WIP o DONE?`};
+  return{type:'query',response:entendi+`<br>¿Qué acción querés hacer? <b>WIP</b> o <b>DONE</b>`};
 }
 function parseDateArg(str){
   const p=str.split(/[\/\-]/);
