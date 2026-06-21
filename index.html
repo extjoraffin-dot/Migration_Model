@@ -895,7 +895,7 @@ function toggleChat(){
   const p=document.getElementById('chat-panel');
   p.classList.toggle('open',chatOpen);
   document.getElementById('unread-dot').style.display='none';
-  if(chatOpen&&document.getElementById('chat-messages').children.length===0) initChat();
+  if(chatOpen&&document.getElementById('chat-messages').children.length===0){chatCtx={flujo:null,modelo:null};initChat();}
 }
 function initChat(){
   addChatMsg('👋 ¡Hola! Soy tu agente de auditoría. Podés decirme en lenguaje natural qué paso actualizaste, o pedirme que cree un nuevo flujo.<br><br>Ej: <em>"Completé hoy Modelo 10 de Alipay, demoró 2 días por descuadre de saldos"</em>','bot');
@@ -911,6 +911,10 @@ function addChatMsg(text,role){
   document.getElementById('chat-messages').appendChild(div);
   document.getElementById('chat-messages').scrollTop=99999;
 }
+
+// Contexto retenido entre mensajes del chat
+let chatCtx={flujo:null, modelo:null};
+
 function parseNL(text){
   const lower=text.toLowerCase();
   // Query
@@ -948,16 +952,13 @@ function parseNL(text){
     flujos.push(newFlujo);renderAll();
     return{type:'success',response:`✅ Flujo <b>${newFlujo.name}</b> creado con ${mods.length} modelos y fecha de encendido <b>${fmt(newFlujo.encendido)}</b>. Podés verlo en la tabla de Flujos E2E.`};
   }
-  // Identificar flujo — búsqueda dinámica sobre todos los flujos cargados
+  // Identificar flujo — búsqueda dinámica + fallback a contexto previo
   let targetFlujo=null;
-  // Primer intento: RECON_ID exacto
   flujos.forEach(f=>{if(f.reconId&&lower.includes(f.reconId.toLowerCase())) targetFlujo=f;});
-  // Segundo: alguna palabra del nombre del flujo (>3 chars) aparece en el mensaje
   if(!targetFlujo) flujos.forEach(f=>{
     const parts=f.name.toLowerCase().split(/[\s\-\/]+/);
     if(parts.some(p=>p.length>3&&lower.includes(p))) targetFlujo=f;
   });
-  // Segundo intento: match parcial más amplio (substrings de 4+ chars)
   if(!targetFlujo){
     flujos.forEach(f=>{
       const n=f.name.toLowerCase().replace(/e2e\s*/,'');
@@ -965,13 +966,17 @@ function parseNL(text){
       if(words.some(p=>lower.includes(p))) targetFlujo=f;
     });
   }
+  // Fallback: usar flujo del contexto previo
+  if(!targetFlujo&&chatCtx.flujo) targetFlujo=chatCtx.flujo;
   if(!targetFlujo){
     const nombres=flujos.map(f=>f.name.replace(/^E2E\s*/i,'')).join(', ');
-    return{type:'error',response:`No pude identificar el flujo en el mensaje. Flujos disponibles: <b>${nombres||'ninguno cargado'}</b>`};
+    return{type:'error',response:`No pude identificar el flujo. Flujos disponibles: <b>${nombres||'ninguno cargado'}</b>`};
   }
-  // Identificar modelo — búsqueda directa por nombre real del modelo
+  // Guardar flujo en contexto
+  chatCtx.flujo=targetFlujo;
+
+  // Identificar modelo — búsqueda por nombre real + fallback a contexto previo
   let targetModelo=null;
-  // Busca el modelo cuyo nombre tenga mayor overlap con el mensaje
   let bestScore=0;
   targetFlujo.modelos.forEach(m=>{
     const mn=m.name.toLowerCase().replace(/[\/\s]+/g,' ');
@@ -979,12 +984,16 @@ function parseNL(text){
     const score=words.filter(w=>lower.includes(w)).length;
     if(score>bestScore){bestScore=score;targetModelo=m;}
   });
-  // También matchea RECON_ID si lo mencionan
   if(targetFlujo.reconId&&lower.includes(targetFlujo.reconId.toLowerCase())) targetModelo=targetModelo||targetFlujo.modelos[0];
-  if(!targetModelo||bestScore===0){
+  // Fallback: usar modelo del contexto previo (solo si es del mismo flujo)
+  if((!targetModelo||bestScore===0)&&chatCtx.modelo&&targetFlujo.modelos.find(m=>m.id===chatCtx.modelo.id))
+    targetModelo=chatCtx.modelo;
+  if(!targetModelo){
     const mods=targetFlujo.modelos.map(m=>m.name).join(', ');
     return{type:'error',response:`Identifiqué el flujo <b>${targetFlujo.name}</b> pero no el modelo. Modelos disponibles: <b>${mods}</b>`};
   }
+  // Guardar modelo en contexto
+  chatCtx.modelo=targetModelo;
   // Identificar acción
   const isComplete=lower.includes('complet')||lower.includes('terminé')||lower.includes('finaliz')||lower.includes('listo')||lower.includes('hecho');
   const isWip=lower.includes('proceso')||lower.includes('wip')||lower.includes('inicio')||lower.includes('inicié');
@@ -1011,13 +1020,16 @@ function parseNL(text){
     else if(days>0) targetAct.justify=`Demora de ${days} días (sin detalle).`;
     renderAll();
     const dev=getDeviation(targetAct);
-    return{type:'success',response:`✅ <b>${targetAct.name}</b> en <b>${targetModelo.name}</b> (${targetFlujo.name}) marcado como Completado.<br>Fecha real: ${fmt(targetAct.done)}<br>${dev>0?`Desvío: <span style="color:var(--red);">+${dev}d</span>`:'Sin desvío.'}<br>${targetAct.justify?`Justificación: <em>${targetAct.justify}</em>`:''}`};
+    const ctx=`<br><span style="font-size:11px;color:var(--text-muted);">📌 Contexto activo: ${targetFlujo.name.replace(/^E2E\s*/i,'')} → ${targetModelo.name}</span>`;
+    return{type:'success',response:`✅ <b>${targetAct.name}</b> en <b>${targetModelo.name}</b> marcado como Completado.<br>Fecha real: ${fmt(targetAct.done)}<br>${dev>0?`Desvío: <span style="color:var(--red);">+${dev}d</span>`:'Sin desvío.'}<br>${targetAct.justify?`Justificación: <em>${targetAct.justify}</em>`:''}`+ctx};
   }
   if(isWip){
     targetAct.status='wip';renderAll();
-    return{type:'success',response:`🔄 <b>${targetAct.name}</b> en <b>${targetModelo.name}</b> marcado como En proceso.`};
+    const ctx=`<br><span style="font-size:11px;color:var(--text-muted);">📌 Contexto activo: ${targetFlujo.name.replace(/^E2E\s*/i,'')} → ${targetModelo.name}</span>`;
+    return{type:'success',response:`🔄 <b>${targetAct.name}</b> en <b>${targetModelo.name}</b> marcado como En proceso.`+ctx};
   }
-  return{type:'error',response:`Identifiqué <b>${targetFlujo.name} → ${targetModelo.name} → ${targetAct.name}</b> pero no pude determinar la acción. ¿Querés completar o iniciar?`};
+  const ctx=`<br><span style="font-size:11px;color:var(--text-muted);">📌 Contexto activo: ${targetFlujo.name.replace(/^E2E\s*/i,'')} → ${targetModelo.name}</span>`;
+  return{type:'error',response:`Identifiqué <b>${targetFlujo.name} → ${targetModelo.name} → ${targetAct.name}</b> pero no pude determinar la acción. ¿Querés completar o iniciar?`+ctx};
 }
 function parseDateArg(str){
   const p=str.split(/[\/\-]/);
