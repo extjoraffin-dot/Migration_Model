@@ -318,74 +318,7 @@ const ANALISTA_COLORS={'Joaco R':'var(--blue)','Sofi':'var(--purple)','Benja':'v
 const ANALISTA_BG={'Joaco R':'var(--blue-bg)','Sofi':'var(--purple-bg)','Benja':'var(--green-bg)','Joaco H':'var(--yellow-bg)','—':'rgba(100,116,139,0.1)'};
 
 // ESTRUCTURA: flujos -> modelos -> actividades
-let flujos=[
-  {
-    id:'alipay',name:'E2E Alipay CBT-BT',icon:'fa-building-columns',encendido:'2026-09-05',responsable:'Joaco R',reconId:'',
-    modelos:[
-      {id:'alipay-validacion',name:'Validación',
-        actividades:[
-          {id:'av-1',name:'Validación de fuentes (Banco / Site / Liqui)',status:'done',eta:'2026-06-01',done:'2026-06-01',justify:'',responsable:'Joaco R'},
-          {id:'av-2',name:'Validación de cuentas (Con envío de mail de confirmación)',status:'done',eta:'2026-06-03',done:'2026-06-03',justify:'',responsable:'Joaco R'},
-        ]
-      },
-      {id:'alipay-serial',name:'Serialización',
-        actividades:[
-          {id:'as-1',name:'Pedido de lógicas V1',status:'done',eta:'2026-06-05',done:'2026-06-05',justify:'',responsable:'Joaco R'},
-          {id:'as-2',name:'Conciliación de Integridad',status:'done',eta:'2026-06-08',done:'2026-06-12',justify:'Demora en provisión de datos crudos por parte de soporte técnico.',responsable:'Joaco R'},
-          {id:'as-3',name:'Conciliación Bank',status:'done',eta:'2026-06-10',done:'2026-06-13',justify:'Descuadre inicial en saldo inicial de extracto bancario.',responsable:'Joaco R'},
-          {id:'as-4',name:'Conciliación Model',status:'wip',eta:'2026-06-15',done:null,justify:'',responsable:'Joaco R'},
-          {id:'as-5',name:'Traductor contable (Serialización)',status:'pending',eta:'2026-06-20',done:null,justify:'',responsable:'Joaco R'},
-          {id:'as-6',name:'Control manual (Serialización)',status:'pending',eta:'2026-06-22',done:null,justify:'',responsable:'Joaco R'},
-          {id:'as-7',name:'Sign-Off (SO) de Serialización',status:'pending',eta:'2026-06-25',done:null,justify:'',responsable:'Joaco R'},
-        ]
-      },
-      {id:'alipay-m10',name:'M10',
-        actividades:[
-          {id:'am10-1',name:'Validación de movimientos vs mp_source',status:'pending',eta:'2026-07-18',done:null,justify:'',responsable:'Joaco R'},
-          {id:'am10-2',name:'Conciliación Dummy (M10)',status:'pending',eta:'2026-07-19',done:null,justify:'',responsable:'Joaco R'},
-          {id:'am10-3',name:'Traductor contable (M10)',status:'pending',eta:'2026-07-20',done:null,justify:'',responsable:'Joaco R'},
-          {id:'am10-4',name:'Control manual (M10)',status:'pending',eta:'2026-07-21',done:null,justify:'',responsable:'Joaco R'},
-          {id:'am10-5',name:'Sign-Off (SO) de M10',status:'pending',eta:'2026-07-22',done:null,justify:'',responsable:'Joaco R'},
-        ]
-      },
-      {id:'alipay-m2070',name:'M20/70',
-        actividades:[
-          {id:'am20-1',name:'Conciliación Dummy (M20/70)',status:'pending',eta:'2026-07-25',done:null,justify:'',responsable:'Joaco R'},
-          {id:'am20-2',name:'Traductor contable (M20/70)',status:'pending',eta:'2026-07-26',done:null,justify:'',responsable:'Joaco R'},
-          {id:'am20-3',name:'Control manual (M20/70)',status:'pending',eta:'2026-07-28',done:null,justify:'',responsable:'Joaco R'},
-          {id:'am20-4',name:'Sign-Off (SO) de M20/70',status:'pending',eta:'2026-07-30',done:null,justify:'',responsable:'Joaco R'},
-        ]
-      },
-      {id:'alipay-m50',name:'M50',
-        actividades:[
-          {id:'am50-1',name:'Carga de ajustes en template (M50)',status:'pending',eta:'2026-08-03',done:null,justify:'',responsable:'Joaco R'},
-          {id:'am50-2',name:'Transformadas en dummy (M50)',status:'pending',eta:'2026-08-04',done:null,justify:'',responsable:'Joaco R'},
-          {id:'am50-3',name:'Configuración ZFI (M50)',status:'pending',eta:'2026-08-06',done:null,justify:'',responsable:'Joaco R'},
-          {id:'am50-4',name:'Traductor contable (M50)',status:'pending',eta:'2026-08-07',done:null,justify:'',responsable:'Joaco R'},
-          {id:'am50-5',name:'Control manual (M50)',status:'pending',eta:'2026-08-09',done:null,justify:'',responsable:'Joaco R'},
-          {id:'am50-6',name:'Sign-Off (SO) de M50',status:'pending',eta:'2026-08-10',done:null,justify:'',responsable:'Joaco R'},
-        ]
-      },
-      {id:'alipay-tableros',name:'Tableros',
-        actividades:[
-          {id:'atb-1',name:'Pedido de export de modelos y armado de templates (B&A)',status:'pending',eta:'2026-08-24',done:null,justify:'',responsable:'Joaco R'},
-          {id:'atb-2',name:'Reunión de KO (Kick-Off) con el equipo de B&A',status:'pending',eta:'2026-08-26',done:null,justify:'',responsable:'Joaco R'},
-          {id:'atb-3',name:'Sign-Off (SO) del Tablero final por B&A',status:'pending',eta:'2026-08-28',done:null,justify:'',responsable:'Joaco R'},
-        ]
-      },
-      {id:'alipay-encendido',name:'Encendido',
-        actividades:[
-          {id:'aen-1',name:'Validación de fuentes',status:'pending',eta:'2026-09-02',done:null,justify:'',responsable:'Joaco R'},
-          {id:'aen-2',name:'Encendido de TC',status:'pending',eta:'2026-09-03',done:null,justify:'',responsable:'Joaco R'},
-          {id:'aen-3',name:'Estabilización',status:'pending',eta:'2026-09-04',done:null,justify:'',responsable:'Joaco R'},
-          {id:'aen-4',name:'Traspaso',status:'pending',eta:'2026-09-04',done:null,justify:'',responsable:'Joaco R'},
-          {id:'aen-5',name:'Mail de traspaso',status:'pending',eta:'2026-09-05',done:null,justify:'',responsable:'Joaco R'},
-          {id:'aen-6',name:'OK mail de traspaso',status:'pending',eta:'2026-09-05',done:null,justify:'',responsable:'Joaco R'},
-        ]
-      },
-    ]
-  }
-]
+let flujos=[]
 let selectedFlujo=null, selectedModelo=null, filterMode='all';
 
 // HELPERS
