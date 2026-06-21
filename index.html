@@ -312,6 +312,10 @@ function dateInput(value, onchangeFn, extraStyle=''){
     onchange="const v=parseDate(this.value);if(v){this.value=fmt(v);${onchangeFn.replace('VALUE',`v`)}}else{this.style.borderColor='var(--red)';}"
     onfocus="this.style.borderColor=''">`
 }
+
+const ANALISTAS=['Joaco R','Sofi','Benja','Joaco H','—'];
+const ANALISTA_COLORS={'Joaco R':'var(--blue)','Sofi':'var(--purple)','Benja':'var(--green)','Joaco H':'var(--yellow)','—':'var(--text-muted)'};
+const ANALISTA_BG={'Joaco R':'var(--blue-bg)','Sofi':'var(--purple-bg)','Benja':'var(--green-bg)','Joaco H':'var(--yellow-bg)','—':'rgba(100,116,139,0.1)'};
 const ANALISTA_COLORS={'Joaco R':'var(--blue)','Sofi':'var(--purple)','Benja':'var(--green)','Joaco H':'var(--yellow)','—':'var(--text-muted)'};
 const ANALISTA_BG={'Joaco R':'var(--blue-bg)','Sofi':'var(--purple-bg)','Benja':'var(--green-bg)','Joaco H':'var(--yellow-bg)','—':'rgba(100,116,139,0.1)'};
 
