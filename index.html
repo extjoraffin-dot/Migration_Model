@@ -461,9 +461,9 @@ function renderKPIs(){
 }
 
 function statusBadge(st){
-  if(st==='done') return '<span class="badge badge-green"><i class="fa-solid fa-check" style="font-size:9px;"></i> Completado</span>';
-  if(st==='wip') return '<span class="badge badge-blue"><i class="fa-solid fa-circle-half-stroke" style="font-size:9px;"></i> En proceso</span>';
-  return '<span class="badge badge-gray"><i class="fa-regular fa-clock" style="font-size:9px;"></i> Pendiente</span>';
+  if(st==='done') return '<span class="badge badge-green"><i class="fa-solid fa-check" style="font-size:9px;"></i> DONE</span>';
+  if(st==='wip') return '<span class="badge badge-blue"><i class="fa-solid fa-circle-half-stroke" style="font-size:9px;"></i> WIP</span>';
+  return '<span class="badge badge-gray"><i class="fa-regular fa-clock" style="font-size:9px;"></i> TBD</span>';
 }
 function devCell(item){
   const d=getDeviation(item);
@@ -710,9 +710,9 @@ function renderActRows(f,m){
       </td>
       <td style="padding:9px 10px;text-align:center;">
         <select onchange="updateAct('${f.id}','${m.id}','${act.id}','status',this.value)" style="width:120px;font-size:12px;text-align:center;">
-          <option value="pending" ${act.status==='pending'?'selected':''}>Pendiente</option>
-          <option value="wip" ${act.status==='wip'?'selected':''}>En proceso</option>
-          <option value="done" ${act.status==='done'?'selected':''}>Completado</option>
+          <option value="pending" ${act.status==='pending'?'selected':''}>TBD</option>
+          <option value="wip" ${act.status==='wip'?'selected':''}>WIP</option>
+          <option value="done" ${act.status==='done'?'selected':''}>DONE</option>
         </select>
       </td>
       <td style="padding:9px 10px;text-align:center;">
@@ -786,7 +786,7 @@ function downloadTemplate(){
       const acts=MASTER_ACTIVIDADES[key]||[];
       rows.push(`# ── ${nombre.toUpperCase()} ──`);
       acts.forEach(act=>{
-        rows.push(`"${FLUJO}","${arquetipo}","${RESP}","${nombre}","${act}","pending","YYYY-MM-DD","",""`);
+        rows.push(`"${FLUJO}","${arquetipo}","${RESP}","${nombre}","${act}","tbd","YYYY-MM-DD","",""`);
       });
       rows.push('');
     });
@@ -839,7 +839,7 @@ function importCSV(input){
         if(!fn||!mn||!an)return;
         if(!fMap[fn])fMap[fn]={name:fn,arquetipo:arq,responsable:resp,modelos:{}};
         if(!fMap[fn].modelos[mn])fMap[fn].modelos[mn]={name:mn,actividades:[]};
-        const statusMap={'pendiente':'pending','en proceso':'wip','completado':'done','done':'done','wip':'wip','pending':'pending'};
+        const statusMap={'pendiente':'pending','en proceso':'wip','completado':'done','tbd':'pending','wip':'wip','done':'done','pending':'pending'};
         fMap[fn].modelos[mn].actividades.push({
           id:fn+mn+an+Date.now(),name:an,
           status:statusMap[(row['estado']||'pending').toLowerCase()]||'pending',
