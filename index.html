@@ -757,13 +757,14 @@ function updateAct(fid,mid,aid,field,value){
   const f=flujos.find(x=>x.id===fid);
   const m=f.modelos.find(x=>x.id===mid);
   const act=m.actividades.find(a=>a.id===aid);
+  const prev=act[field];
   act[field]=value;
   if(field==='status'){
     if(value==='done'&&!act.done) act.done=todayStr();
     if(value!=='done') act.done=null;
   }
+  if(prev!==value) logChange(f,m,act,field,prev,value,'tabla');
   renderActRows(f,m);
-  // Refresh modelo row stats inline without full re-render
   populateModelosInline(f);
   renderKPIs();renderFlujos();
 }
@@ -978,14 +979,19 @@ function execPending(){
   if(!p) return;
   chatCtx.pending=null;
   if(p.action==='done'){
+    const prev=p.act.status;
     p.act.status='done';p.act.done=todayStr();
     if(p.justify) p.act.justify=p.justify;
+    logChange(chatCtx.flujo,chatCtx.modelo,p.act,'status',prev,'done','chat');
     renderAll();
     const dev=getDeviation(p.act);
     return{type:'success',response:`✅ <b>${p.act.name}</b> marcado como DONE.<br>Fecha real: ${fmt(p.act.done)}<br>${dev>0?`Desvío: <span style="color:var(--red);">+${dev}d</span>`:'Sin desvío.'}<br>${p.act.justify?`Justificación: <em>${p.act.justify}</em>`:''}`};
   }
   if(p.action==='wip'){
-    p.act.status='wip';renderAll();
+    const prev=p.act.status;
+    p.act.status='wip';
+    logChange(chatCtx.flujo,chatCtx.modelo,p.act,'status',prev,'wip','chat');
+    renderAll();
     return{type:'success',response:`🔄 <b>${p.act.name}</b> marcado como WIP.`};
   }
 }
@@ -1005,8 +1011,27 @@ function parseNL(text){
     chatCtx.pending=null;
   }
 
-  // Query
-  if((lower.includes('desvío')||lower.includes('desvio'))&&(lower.includes('ver')||lower.includes('qué')||lower.includes('sin justif'))){
+  // Queries sobre historial
+  const isHistorial=lower.includes('hoy')||lower.includes('historial')||lower.includes('cambios')||lower.includes('hice')||lower.includes('paso')||lower.includes('semana')||lower.includes('ayer');
+  if(isHistorial){
+    const todayDate=todayStr();
+    const ayer=pastDate(1);
+    let entries=changeLog;
+    if(lower.includes('hoy')) entries=changeLog.filter(e=>e.ts.startsWith(todayDate));
+    else if(lower.includes('ayer')) entries=changeLog.filter(e=>e.ts.startsWith(ayer));
+    else if(lower.includes('semana')) entries=changeLog.filter(e=>new Date(e.ts)>=new Date(new Date()-7*86400000));
+    if(!entries.length) return{type:'query',response:'Sin cambios registrados para ese período.'};
+    const lines=entries.slice(-20).reverse().map(e=>{
+      const hora=new Date(e.ts).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+      const fecha=new Date(e.ts).toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit'});
+      const accion=e.to==='done'?'✅ DONE':e.to==='wip'?'🔄 WIP':`${e.field}: ${e.from}→${e.to}`;
+      return `<span style="color:var(--text-muted);font-size:11px;">${fecha} ${hora} [${e.via}]</span> ${e.flujo.replace(/^E2E\s*/i,'')} → ${e.modelo} → <b>${e.actividad}</b>: ${accion}`;
+    });
+    return{type:'query',response:`<b>Historial (${entries.length} cambio${entries.length!==1?'s':''}):</b><br>${lines.join('<br>')}`};
+  }
+
+  // Query desvíos
+  if((lower.includes('desvio'))&&(lower.includes('ver')||lower.includes('que')||lower.includes('sin justif'))){
     let res='<b>Desvíos sin justificar:</b><br>';let found=false;
     flujos.forEach(f=>f.modelos.forEach(m=>m.actividades.forEach(a=>{
       const d=getDeviation(a);
@@ -1208,7 +1233,40 @@ function renderAll(){
   }
   renderKPIs();
   renderFlujos();
+  saveState();
 }
+
+// ── PERSISTENCIA localStorage ──────────────────────────────────────
+function saveState(){
+  try{
+    localStorage.setItem('mg_flujos',JSON.stringify(flujos));
+    localStorage.setItem('mg_log',JSON.stringify(changeLog));
+  }catch(e){}
+}
+function loadState(){
+  try{
+    const f=localStorage.getItem('mg_flujos');
+    const l=localStorage.getItem('mg_log');
+    if(f) flujos=JSON.parse(f);
+    if(l) changeLog=JSON.parse(l);
+  }catch(e){}
+}
+
+// ── LOG DE CAMBIOS ──────────────────────────────────────────────────
+let changeLog=[];
+function logChange(flujo,modelo,actividad,field,from,to,via='tabla'){
+  changeLog.push({
+    ts:new Date().toISOString(),
+    via,
+    flujo:flujo.name,
+    modelo:modelo.name,
+    actividad:actividad.name,
+    field,from,to
+  });
+  saveState();
+}
+
+loadState();
 renderAll();
 </script>
 <style>@keyframes fadeInUp{from{opacity:0;transform:translateY(8px) translateX(-50%)}to{opacity:1;transform:translateY(0) translateX(-50%)}}</style>
