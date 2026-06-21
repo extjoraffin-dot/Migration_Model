@@ -1125,7 +1125,7 @@ function crearFlujo(){
     const key=ch.value;
     const acts=(MASTER_ACTIVIDADES[key]||[]).map((an,i)=>({
       id:key+i+Date.now(),name:an,status:'pending',
-      eta:futureDate(etaOffset+i*2),done:null,justify:'',responsable
+      eta:null,done:null,justify:'',responsable
     }));
     modelos.push({id:key+'-'+Date.now(),name:MASTER_NOMBRES[key]||key,actividades:acts});
     etaOffset+=acts.length*2+5;
