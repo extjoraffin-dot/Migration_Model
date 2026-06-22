@@ -502,6 +502,19 @@ function renderFlujos(){
       const cols=isCompact?6:7;
       expandTr.innerHTML=`<td colspan="${cols}" style="padding:0;background:rgba(0,0,0,0.15);border-bottom:2px solid var(--border-light);">
         <div style="padding:12px 18px 12px 42px;">
+          <div style="display:flex;align-items:flex-end;gap:10px;margin-bottom:14px;padding:10px 14px;background:rgba(16,185,129,0.04);border:1px solid rgba(16,185,129,0.12);border-radius:8px;">
+            <div>
+              <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;">Fecha de Encendido</div>
+              <input id="enc-date-${f.id}" type="text" value="${f.encendido?fmt(f.encendido):''}" placeholder="dd/mm/aa"
+                style="font-size:12px;background:var(--bg-deep);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 8px;width:110px;">
+            </div>
+            <div style="flex:1;">
+              <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;">Motivo del cambio</div>
+              <input id="enc-motivo-${f.id}" type="text" placeholder="Ej: se corrió por feriado, cliente pidió cambio..."
+                style="font-size:12px;background:var(--bg-deep);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 8px;width:100%;">
+            </div>
+            <button class="btn btn-green" style="font-size:11px;padding:5px 12px;" onclick="applyFlujoEncendido('${f.id}')">Guardar</button>
+          </div>
           ${buildModelosHTML(f)}
         </div>
       </td>`;
@@ -696,6 +709,26 @@ function renderActRows(f,m){
       </td>`;
     tbody.appendChild(tr);
   });
+}
+function updateFlujoEncendido(fid,newDate,motivo){
+  const f=flujos.find(x=>x.id===fid);
+  if(!f) return;
+  const parsed=parseDate(newDate);
+  if(!parsed){showToast('⚠ Fecha inválida. Usá dd/mm/aa o dd/mm/aaaa','red');return;}
+  const prev=f.encendido;
+  f.encendido=parsed;
+  const fakeM={name:'—'};const fakeA={name:'Fecha de encendido'};
+  if(prev!==parsed) logChange(f,fakeM,fakeA,'encendido',prev,parsed+(motivo?` (${motivo})`:''),'tabla');
+  renderAll();
+}
+function updateFlujoEncendidoMotivo(fid,val){
+  const el=document.getElementById('enc-motivo-'+fid);
+  if(el) el.dataset.motivo=val;
+}
+function applyFlujoEncendido(fid){
+  const dateEl=document.getElementById('enc-date-'+fid);
+  const motivoEl=document.getElementById('enc-motivo-'+fid);
+  updateFlujoEncendido(fid,dateEl?dateEl.value:'',motivoEl?motivoEl.value:'');
 }
 function updateAct(fid,mid,aid,field,value){
   const f=flujos.find(x=>x.id===fid);
