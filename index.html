@@ -609,6 +609,7 @@ function buildActividadesHTML(f,m){
       <th style="text-align:center;padding:7px 8px;font-size:10px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;">Real</th>
       <th style="text-align:center;padding:7px 8px;font-size:10px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;">Desvío</th>
       <th style="padding:7px 12px;font-size:10px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;">Justificación</th>
+      <th style="padding:7px 12px;font-size:10px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;">Comentario</th>
     </tr></thead>
     <tbody id="acts-tbody-${m.id}"></tbody>
   </table>
@@ -676,12 +677,22 @@ function renderActRows(f,m){
           : `<span style="color:var(--text-muted);font-size:12px;">—</span>`}
       </td>
       <td style="padding:9px 10px;text-align:center;">${devCell(act)}</td>
-      <td style="padding:9px 18px;min-width:200px;">
-        ${needsJ?`<input type="text" placeholder="Justificación obligatoria..." value="${act.justify||''}"
-          class="${missingJ?'justify-required':''}"
+      <td style="padding:9px 18px;min-width:180px;">
+        ${needsJ?`<select class="${missingJ?'justify-required':''}"
           onchange="updateAct('${f.id}','${m.id}','${act.id}','justify',this.value)"
-          style="font-size:12px;">`
+          style="font-size:12px;background:var(--bg-deep);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 8px;width:100%;">
+          <option value="" ${!act.justify?'selected':''}>Seleccionar...</option>
+          <option value="BLOCKED TMO" ${act.justify==='BLOCKED TMO'?'selected':''}>BLOCKED TMO</option>
+          <option value="BLOCKED INTEGRACION" ${act.justify==='BLOCKED INTEGRACION'?'selected':''}>BLOCKED INTEGRACION</option>
+          <option value="DESPRIORIZACION" ${act.justify==='DESPRIORIZACION'?'selected':''}>DESPRIORIZACION</option>
+          <option value="COMPLEJIDAD DEL CASO" ${act.justify==='COMPLEJIDAD DEL CASO'?'selected':''}>COMPLEJIDAD DEL CASO</option>
+        </select>`
         :`<span style="color:var(--text-muted);font-size:12px;">—</span>`}
+      </td>
+      <td style="padding:9px 18px;min-width:180px;">
+        <input type="text" placeholder="Comentario opcional..." value="${act.comment||''}"
+          onchange="updateAct('${f.id}','${m.id}','${act.id}','comment',this.value)"
+          style="font-size:12px;background:var(--bg-deep);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 8px;width:100%;">
       </td>`;
     tbody.appendChild(tr);
   });
@@ -714,12 +725,12 @@ function exportCSV(){
   const k=globalKPIs();
   let warn='';
   if(k.unjust>0) warn=`# ADVERTENCIA: ${k.unjust} desvío(s) sin justificar\n`;
-  let rows=[warn+'Flujo,RECON_ID,Modelo,Actividad,Responsable,Estado,ETA,Fecha Real,Desvío (días),Justificación'];
+  let rows=[warn+'Flujo,RECON_ID,Modelo,Actividad,Responsable,Estado,ETA,Fecha Real,Desvío (días),Justificación,Comentario'];
   flujos.forEach(f=>{
     f.modelos.forEach(m=>{
       m.actividades.forEach(a=>{
         const d=getDeviation(a);
-        rows.push(`"${f.name}","${f.reconId||''}","${m.name}","${a.name}","${a.responsable||'—'}","${a.status}","${a.eta||''}","${a.done||''}","${d!==null?d:''}","${a.justify||''}"`);
+        rows.push(`"${f.name}","${f.reconId||''}","${m.name}","${a.name}","${a.responsable||'—'}","${a.status}","${a.eta||''}","${a.done||''}","${d!==null?d:''}","${a.justify||''}","${a.comment||''}"`);
       });
     });
   });
@@ -1130,7 +1141,7 @@ function crearFlujo(){
     const key=ch.value;
     const acts=(MASTER_ACTIVIDADES[key]||[]).map((an,i)=>({
       id:key+i+Date.now(),name:an,status:'pending',
-      eta:null,done:null,justify:'',responsable
+      eta:null,done:null,justify:'',comment:'',responsable
     }));
     modelos.push({id:key+'-'+Date.now(),name:MASTER_NOMBRES[key]||key,actividades:acts});
     etaOffset+=acts.length*2+5;
