@@ -329,8 +329,9 @@ function getDeviation(act){
 }
 function modeloStats(modelo){
   const acts=modelo.actividades;
-  const total=acts.length, done=acts.filter(a=>a.status==='done').length;
-  const pct=Math.round(done/total*100);
+  const countable=acts.filter(a=>a.status!=='na');
+  const total=countable.length, done=countable.filter(a=>a.status==='done').length;
+  const pct=total>0?Math.round(done/total*100):0;
   const devs=acts.map(a=>getDeviation(a)).filter(d=>d!==null&&d>0);
   const avgDev=devs.length?Math.round(devs.reduce((a,b)=>a+b,0)/devs.length):0;
   const unjust=acts.filter(a=>{const d=getDeviation(a);return d!==null&&d>0&&(!a.justify||a.justify.length<10);}).length;
@@ -415,6 +416,7 @@ function renderKPIs(){
 function statusBadge(st){
   if(st==='done') return '<span class="badge badge-green"><i class="fa-solid fa-check" style="font-size:9px;"></i> DONE</span>';
   if(st==='wip') return '<span class="badge badge-blue"><i class="fa-solid fa-circle-half-stroke" style="font-size:9px;"></i> WIP</span>';
+  if(st==='na') return '<span class="badge badge-gray" style="opacity:0.6;"><i class="fa-solid fa-minus" style="font-size:9px;"></i> N/A</span>';
   return '<span class="badge badge-gray"><i class="fa-regular fa-clock" style="font-size:9px;"></i> TBD</span>';
 }
 function devCell(item){
@@ -626,6 +628,13 @@ function buildActividadesHTML(f,m){
     </tr></thead>
     <tbody id="acts-tbody-${m.id}"></tbody>
   </table>
+  </div>
+  <div style="margin-top:8px;display:flex;align-items:center;gap:8px;">
+    <input id="new-act-name-${m.id}" type="text" placeholder="Nombre de la nueva actividad..."
+      style="flex:1;font-size:12px;background:var(--bg-deep);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:5px 10px;">
+    <button class="btn btn-ghost" style="font-size:11px;padding:5px 12px;" onclick="addActividadManual('${f.id}','${m.id}')">
+      <i class="fa-solid fa-plus"></i> Actividad
+    </button>
   </div>`;
 }
 
@@ -679,6 +688,7 @@ function renderActRows(f,m){
           <option value="pending" ${act.status==='pending'?'selected':''}>TBD</option>
           <option value="wip" ${act.status==='wip'?'selected':''}>WIP</option>
           <option value="done" ${act.status==='done'?'selected':''}>DONE</option>
+          <option value="na" ${act.status==='na'?'selected':''}>N/A</option>
         </select>
       </td>
       <td style="padding:9px 10px;text-align:center;">
@@ -709,6 +719,20 @@ function renderActRows(f,m){
       </td>`;
     tbody.appendChild(tr);
   });
+}
+function addActividadManual(fid,mid){
+  const f=flujos.find(x=>x.id===fid);
+  const m=f.modelos.find(x=>x.id===mid);
+  const inp=document.getElementById('new-act-name-'+mid);
+  const name=(inp?inp.value:'').trim();
+  if(!name){showToast('⚠ Ingresá el nombre de la actividad','red');return;}
+  const newAct={id:mid+Date.now(),name,status:'pending',eta:null,done:null,justify:'',comment:'',responsable:'—'};
+  m.actividades.push(newAct);
+  logChange(f,m,newAct,'actividad','—',name,'tabla');
+  if(inp) inp.value='';
+  renderActRows(f,m);
+  renderKPIs();renderFlujos();
+  showToast(`✓ Actividad "${name}" agregada a ${m.name}`,'green');
 }
 function updateFlujoEncendido(fid,newDate,motivo){
   const f=flujos.find(x=>x.id===fid);
