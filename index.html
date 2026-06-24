@@ -705,10 +705,10 @@ function renderActRows(f,m){
           onchange="updateAct('${f.id}','${m.id}','${act.id}','justify',this.value)"
           style="font-size:12px;background:var(--bg-deep);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 8px;width:100%;">
           <option value="" ${!act.justify?'selected':''}>Seleccionar...</option>
-          <option value="BLOCKED TMO" ${act.justify==='BLOCKED TMO'?'selected':''}>BLOCKED TMO</option>
-          <option value="BLOCKED INTEGRACION" ${act.justify==='BLOCKED INTEGRACION'?'selected':''}>BLOCKED INTEGRACION</option>
-          <option value="DESPRIORIZACION" ${act.justify==='DESPRIORIZACION'?'selected':''}>DESPRIORIZACION</option>
-          <option value="COMPLEJIDAD DEL CASO" ${act.justify==='COMPLEJIDAD DEL CASO'?'selected':''}>COMPLEJIDAD DEL CASO</option>
+          <option value="BLOCK FPS" ${act.justify==='BLOCK FPS'?'selected':''}>BLOCK FPS</option>
+          <option value="BLOCK TMO" ${act.justify==='BLOCK TMO'?'selected':''}>BLOCK TMO</option>
+          <option value="REPRIORIZADO" ${act.justify==='REPRIORIZADO'?'selected':''}>REPRIORIZADO</option>
+          <option value="DEMORA V2" ${act.justify==='DEMORA V2'?'selected':''}>DEMORA V2</option>
         </select>`
         :`<span style="color:var(--text-muted);font-size:12px;">—</span>`}
       </td>
