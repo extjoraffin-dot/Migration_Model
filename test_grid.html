@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test Grid</title>
+<style>
+body{font-family:sans-serif;background:#0a0f1a;color:#e2e8f0;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;}
+.card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:32px;text-align:center;max-width:400px;}
+h1{color:#10b981;margin:0 0 8px;}
+p{color:#94a3b8;margin:0 0 20px;}
+button{background:#10b981;color:#fff;border:none;border-radius:8px;padding:10px 24px;font-size:14px;cursor:pointer;}
+button:hover{background:#059669;}
+#resultado{margin-top:16px;font-size:13px;color:#10b981;}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>Migrations Guard AI</h1>
+  <p>Archivo de prueba para GRID</p>
+  <button onclick="probar()">Probar</button>
+  <div id="resultado"></div>
+</div>
+<script>
+function probar(){
+  document.getElementById('resultado').textContent='✓ GRID lo acepta correctamente';
+}
+</script>
+</body>
+</html>
