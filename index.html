@@ -275,6 +275,9 @@ input:disabled{opacity:0.4;cursor:not-allowed;}
           <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;padding:6px 8px;border:1px solid var(--border);border-radius:6px;"><input type="checkbox" value="costs_tch"> Costs TCH</label>
           <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;padding:6px 8px;border:1px solid var(--border);border-radius:6px;"><input type="checkbox" value="costs_calc"> Costs Calc</label>
           <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;padding:6px 8px;border:1px solid var(--border);border-radius:6px;"><input type="checkbox" value="tableros"> Tableros</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;padding:6px 8px;border:1px solid var(--border);border-radius:6px;"><input type="checkbox" value="so_final_bt" data-bt-only> SO Final (BT)</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;padding:6px 8px;border:1px solid var(--border);border-radius:6px;"><input type="checkbox" value="so_final_mdc" data-mdc-only> SO Final (MDC)</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;padding:6px 8px;border:1px solid var(--border);border-radius:6px;"><input type="checkbox" value="documentacion"> Documentación</label>
           <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;padding:6px 8px;border:1px solid var(--border);border-radius:6px;"><input type="checkbox" value="encendido"> Encendido</label>
         </div>
       </div>
@@ -625,6 +628,7 @@ function buildActividadesHTML(f,m){
       <th style="text-align:center;padding:7px 8px;font-size:10px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;">Desvío</th>
       <th style="padding:7px 12px;font-size:10px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;">Justificación</th>
       <th style="padding:7px 12px;font-size:10px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;">Comentario</th>
+      <th style="padding:7px 12px;font-size:10px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;">Link</th>
     </tr></thead>
     <tbody id="acts-tbody-${m.id}"></tbody>
   </table>
@@ -716,6 +720,17 @@ function renderActRows(f,m){
         <input type="text" placeholder="Comentario opcional..." value="${act.comment||''}"
           onchange="updateAct('${f.id}','${m.id}','${act.id}','comment',this.value)"
           style="font-size:12px;background:var(--bg-deep);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 8px;width:100%;">
+      </td>
+      <td style="padding:9px 18px;min-width:160px;">
+        ${act.link
+          ? `<a href="${act.link}" target="_blank" style="font-size:12px;color:var(--blue);word-break:break-all;">${act.link}</a>
+             <input type="text" placeholder="Link..." value="${act.link||''}"
+               onchange="updateAct('${f.id}','${m.id}','${act.id}','link',this.value)"
+               style="display:none;">`
+          : `<input type="text" placeholder="https://..." value=""
+               onchange="updateAct('${f.id}','${m.id}','${act.id}','link',this.value)"
+               style="font-size:12px;background:var(--bg-deep);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 8px;width:100%;">`
+        }
       </td>`;
     tbody.appendChild(tr);
   });
@@ -782,12 +797,12 @@ function exportCSV(){
   const k=globalKPIs();
   let warn='';
   if(k.unjust>0) warn=`# ADVERTENCIA: ${k.unjust} desvío(s) sin justificar\n`;
-  let rows=[warn+'Flujo,RECON_ID,Modelo,Actividad,Responsable,Estado,ETA,Fecha Real,Desvío (días),Justificación,Comentario'];
+  let rows=[warn+'Flujo,RECON_ID,Modelo,Actividad,Responsable,Estado,ETA,Fecha Real,Desvío (días),Justificación,Comentario,Link'];
   flujos.forEach(f=>{
     f.modelos.forEach(m=>{
       m.actividades.forEach(a=>{
         const d=getDeviation(a);
-        rows.push(`"${f.name}","${f.reconId||''}","${m.name}","${a.name}","${a.responsable||'—'}","${a.status}","${a.eta||''}","${a.done||''}","${d!==null?d:''}","${a.justify||''}","${a.comment||''}"`);
+        rows.push(`"${f.name}","${f.reconId||''}","${m.name}","${a.name}","${a.responsable||'—'}","${a.status}","${a.eta||''}","${a.done||''}","${d!==null?d:''}","${a.justify||''}","${a.comment||''}","${a.link||''}"`);
       });
     });
   });
@@ -1060,7 +1075,7 @@ function parseNL(text){
       modelos:mods.map(mn=>({
         id:mn.toLowerCase().replace(/\s+/g,'-')+'-'+Date.now(),
         name:mn,
-        actividades:defaultActs.map((a,i)=>({id:mn+i+Date.now(),name:a+' '+mn,status:'pending',eta:futureDate((i+1)*7),done:null,justify:''}))
+        actividades:defaultActs.map((a,i)=>({id:mn+i+Date.now(),name:a+' '+mn,status:'pending',eta:futureDate((i+1)*7),done:null,justify:'',comment:'',link:''}))
       }))
     };
     flujos.push(newFlujo);renderAll();
@@ -1161,14 +1176,17 @@ const MASTER_ACTIVIDADES={
   bancos_mdc:['Integración banco manual','Integración banco automático','Parametría general de cuentas','Conciliación 20_BANK_SOURCE','Control manual de consistencia bancaria'],
   m20_mdc:['Conciliación Gross (Monto Bruto)','Conciliación Dummy (M20 Gross)','Traductor contable (M20 Gross)','Control manual (M20 Gross)','Sign-Off (SO) de M20 Gross'],
   m50:['Carga de ajustes en template (M50)','Transformadas en dummy (M50)','Configuración ZFI (M50)','Traductor contable (M50)','Control manual (M50)','Sign-Off (SO) de M50'],
-  costs_tch:['Configuración de PS_reprocesos (TCH)','Configuración de PS_liqmoana (TCH)','Configuración de hash_id (TCH)','Mapeo de Moana_site y Liq_moana (TCH)','Configuración del motor de Reprocesos (TCH)','AG Control de costos (Validación de tasas)','AG Control de plazos (Liquidación)'],
-  costs_calc:['Parametría general de tasas y comisiones (COST_CALC)','Conciliación cost_calc'],
+  costs_tch:['Configuración de PS_reprocesos (TCH)','Configuración de PS_liqmoana (TCH)','Configuración de hash_id (TCH)','Mapeo de Moana_site y Liq_moana (TCH)','Configuración del motor de Reprocesos (TCH)','AG Control de costos (Validación de tasas)','AG Control de plazos (Liquidación)','Sign-Off (SO) de Costs TCH'],
+  costs_calc:['Parametría general de tasas y comisiones (COST_CALC)','Conciliación cost_calc','Sign-Off (SO) de Costs Calc'],
   tableros:['Pedido de export de modelos y armado de templates (B&A)','Reunión de KO (Kick-Off) con el equipo de B&A','Sign-Off (SO) del Tablero final por B&A'],
+  so_final_bt:['Sign-Off (SO) de Serialización','Sign-Off (SO) de M10','Sign-Off (SO) de M20/70','Sign-Off (SO) de M50','Sign-Off (SO) de Tableros'],
+  so_final_mdc:['Sign-Off (SO) de M10','Sign-Off (SO) de M20 Gross','Sign-Off (SO) de M50','Sign-Off (SO) de Costs TCH','Sign-Off (SO) de Costs Calc','Sign-Off (SO) de Tableros'],
+  documentacion:['Documentación del flujo'],
   encendido:['Validación de fuentes','Encendido de TC','Estabilización','Traspaso','Mail de traspaso','OK mail de traspaso'],
 };
-const MASTER_NOMBRES={validacion:'Validación',serial:'Serialización',m10:'M10',m10_mdc:'M10',m2070:'M20/70',bancos_mdc:'Bancos MDC',m20_mdc:'M20 MDC',m50:'M50',costs_tch:'Costs TCH',costs_calc:'Costs Calc',tableros:'Tableros',encendido:'Encendido'};
-const BT_MODELOS=['validacion','serial','m10','m2070','m50','tableros','encendido'];
-const MDC_MODELOS=['validacion','bancos_mdc','m10_mdc','m20_mdc','m50','costs_tch','costs_calc','tableros','encendido'];
+const MASTER_NOMBRES={validacion:'Validación',serial:'Serialización',m10:'M10',m10_mdc:'M10',m2070:'M20/70',bancos_mdc:'Bancos MDC',m20_mdc:'M20 MDC',m50:'M50',costs_tch:'Costs TCH',costs_calc:'Costs Calc',tableros:'Tableros',so_final_bt:'SO Final',so_final_mdc:'SO Final',documentacion:'Documentación',encendido:'Encendido'};
+const BT_MODELOS=['validacion','serial','m10','m2070','m50','tableros','so_final_bt','documentacion','encendido'];
+const MDC_MODELOS=['validacion','bancos_mdc','m10_mdc','m20_mdc','m50','costs_tch','costs_calc','tableros','so_final_mdc','documentacion','encendido'];
 
 function preseleccionarModelos(arquetipo){
   const checks=document.querySelectorAll('#nf-modelos-check input[type=checkbox]');
@@ -1198,7 +1216,7 @@ function crearFlujo(){
     const key=ch.value;
     const acts=(MASTER_ACTIVIDADES[key]||[]).map((an,i)=>({
       id:key+i+Date.now(),name:an,status:'pending',
-      eta:null,done:null,justify:'',comment:'',responsable
+      eta:null,done:null,justify:'',comment:'',link:'',responsable
     }));
     modelos.push({id:key+'-'+Date.now(),name:MASTER_NOMBRES[key]||key,actividades:acts});
     etaOffset+=acts.length*2+5;
