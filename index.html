@@ -87,10 +87,6 @@ input:disabled{opacity:0.4;cursor:not-allowed;}
     </div>
   </div>
   <div style="display:flex;align-items:center;gap:8px;">
-    <div id="alert-dot" style="display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:8px;background:var(--red-bg);border:1px solid rgba(239,68,68,0.2);font-size:12px;color:var(--red);">
-      <i class="fa-solid fa-triangle-exclamation" style="font-size:11px;"></i>
-      <span id="alert-count">—</span>
-    </div>
     <input type="file" id="csv-upload" accept=".csv" style="display:none" onchange="importCSV(this)">
     <button class="btn btn-ghost" onclick="exportResumenPDF()" style="border-color:rgba(139,92,246,0.3);color:var(--purple);"><i class="fa-solid fa-file-arrow-down"></i> Resumen PDF</button>
     <select id="filtro-analista" onchange="renderAll()" style="width:auto;padding:6px 12px;font-size:13px;border-radius:8px;cursor:pointer;">
@@ -170,19 +166,6 @@ input:disabled{opacity:0.4;cursor:not-allowed;}
 
   <!-- NIVEL 2+3 se renderizan inline como acordeón dentro de cada tabla -->
 
-  <!-- ALERT LOG -->
-  <div class="card" style="margin-top:16px;">
-    <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
-      <div style="font-size:14px;font-weight:600;"><i class="fa-solid fa-tower-broadcast" style="color:var(--yellow);margin-right:8px;"></i>Log de Alertas Simuladas</div>
-      <div style="display:flex;gap:8px;">
-        <button class="btn btn-ghost" onclick="fireAlert('slack')"><i class="fa-brands fa-slack"></i> Simular Slack</button>
-        <button class="btn btn-ghost" onclick="fireAlert('email')"><i class="fa-solid fa-envelope"></i> Simular Mail</button>
-      </div>
-    </div>
-    <div id="alert-log" style="padding:14px 18px;display:flex;flex-direction:column;gap:8px;max-height:180px;overflow-y:auto;">
-      <div style="font-size:12px;color:var(--text-muted);text-align:center;padding:16px 0;">Sin alertas disparadas aún.</div>
-    </div>
-  </div>
 </div>
 
 <!-- CHAT FAB -->
@@ -424,10 +407,6 @@ function renderKPIs(){
           <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">Desvío prom: <span style="color:var(--text-dim);font-weight:500;">${k.avgDev>0?'+':''}${k.avgDev}d</span></div>`
       }
     </div>`;
-  const ad=document.getElementById('alert-dot');
-  const ac=document.getElementById('alert-count');
-  if(k.unjust>0){ad.style.display='flex';ac.textContent=`${k.unjust} desvío${k.unjust>1?'s':''} sin justificar`;}
-  else{ad.style.display='none';}
 }
 
 function statusBadge(st){
@@ -1087,18 +1066,6 @@ function importCSV(input){
   input.value='';
 }
 
-// ALERT LOG
-function fireAlert(type){
-  const k=globalKPIs();
-  const now=new Date().toLocaleTimeString('es-AR');
-  const log=document.getElementById('alert-log');
-  if(log.children.length===1&&log.children[0].tagName==='DIV'&&log.children[0].style.textAlign==='center') log.innerHTML='';
-  const entry=document.createElement('div');
-  entry.style.cssText='padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-deep);font-size:12px;font-family:monospace;color:var(--text-dim);';
-  const icon=type==='slack'?'🟣 [Slack]':'📧 [Mail]';
-  entry.innerHTML=`<span style="color:var(--text-muted);">${now}</span> ${icon} <span style="color:${k.unjust>0?'var(--red)':'var(--green)'};">${k.unjust>0?`ALERT: ${k.unjust} paso(s) con desvío sin justificar. Avance: ${k.pct}%. Acción requerida.`:`OK: Todos los desvíos justificados. Avance: ${k.pct}%. Sin bloqueos.`}</span>`;
-  log.prepend(entry);
-}
 
 // CHAT
 let chatOpen=false;
