@@ -95,6 +95,7 @@ input:disabled{opacity:0.4;cursor:not-allowed;}
     <input type="file" id="csv-upload" accept=".csv" style="display:none" onchange="importCSV(this)">
     <button class="btn btn-ghost" onclick="downloadTemplate()"><i class="fa-solid fa-file-arrow-down"></i> Plantilla</button>
     <button class="btn btn-green" onclick="exportCSV()"><i class="fa-solid fa-file-export"></i> Exportar CSV</button>
+    <button class="btn btn-ghost" onclick="exportResumenPDF()" style="border-color:rgba(139,92,246,0.3);color:var(--purple);"><i class="fa-solid fa-file-arrow-down"></i> Resumen PDF</button>
     <select id="filtro-analista" onchange="renderAll()" style="width:auto;padding:6px 12px;font-size:13px;border-radius:8px;cursor:pointer;">
       <option value="">👤 Todos los analistas</option>
     </select>
@@ -793,6 +794,84 @@ function saveModelo(fid,mid){
 }
 
 // EXPORT / IMPORT
+function exportResumenPDF(){
+  const today=new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'});
+  // Agrupar flujos por analista
+  const porAnalista={};
+  flujos.forEach(f=>{
+    const a=f.responsable||'—';
+    if(!porAnalista[a]) porAnalista[a]=[];
+    porAnalista[a].push(f);
+  });
+  const stLabel={pending:'TBD',wip:'WIP',done:'DONE',na:'N/A'};
+  const stColor={pending:'#64748b',wip:'#3b82f6',done:'#10b981',na:'#475569'};
+
+  let body='';
+  Object.keys(porAnalista).sort().forEach(analista=>{
+    const fls=porAnalista[analista];
+    let flujoRows='';
+    fls.forEach(f=>{
+      const fs=flujoStats(f);
+      let modeloRows='';
+      f.modelos.forEach(m=>{
+        const ms=modeloStats(m);
+        const stLabel_m=ms.pct===100?'Completo':ms.done>0?'En curso':'Pendiente';
+        const stCol_m=ms.pct===100?'#10b981':ms.done>0?'#3b82f6':'#64748b';
+        modeloRows+=`<tr>
+          <td style="padding:5px 12px;font-size:12px;color:#334155;">${m.name}</td>
+          <td style="padding:5px 12px;font-size:12px;text-align:center;">
+            <div style="background:#e2e8f0;border-radius:99px;height:6px;width:80px;display:inline-block;vertical-align:middle;">
+              <div style="background:${stCol_m};width:${ms.pct}%;height:6px;border-radius:99px;"></div>
+            </div>
+            <span style="font-size:11px;color:#64748b;margin-left:6px;">${ms.pct}%</span>
+          </td>
+          <td style="padding:5px 12px;font-size:11px;text-align:center;">
+            <span style="background:${stCol_m}22;color:${stCol_m};padding:2px 8px;border-radius:99px;font-weight:600;">${stLabel_m}</span>
+          </td>
+        </tr>`;
+      });
+      flujoRows+=`<div style="margin-bottom:16px;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;">
+        <div style="background:#f8fafc;padding:8px 14px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #e2e8f0;">
+          <span style="font-size:13px;font-weight:700;color:#0f172a;">${f.name}${f.reconId?` <span style="font-size:10px;color:#94a3b8;font-weight:400;">${f.reconId}</span>`:''}</span>
+          <span style="font-size:11px;color:#64748b;">Encendido: ${fmt(f.encendido)} &nbsp;·&nbsp; Avance: <b style="color:#0f172a;">${fs.pct}%</b></span>
+        </div>
+        <table style="width:100%;border-collapse:collapse;">
+          <thead><tr style="background:#f1f5f9;">
+            <th style="padding:5px 12px;font-size:10px;color:#94a3b8;font-weight:600;text-align:left;text-transform:uppercase;">Modelo</th>
+            <th style="padding:5px 12px;font-size:10px;color:#94a3b8;font-weight:600;text-align:center;text-transform:uppercase;">Avance</th>
+            <th style="padding:5px 12px;font-size:10px;color:#94a3b8;font-weight:600;text-align:center;text-transform:uppercase;">Estado</th>
+          </tr></thead>
+          <tbody>${modeloRows}</tbody>
+        </table>
+      </div>`;
+    });
+    body+=`<div style="margin-bottom:28px;">
+      <div style="background:#0f172a;color:#f8fafc;padding:8px 16px;border-radius:8px 8px 0 0;font-size:13px;font-weight:700;margin-bottom:0;">
+        👤 ${analista} <span style="font-size:11px;font-weight:400;color:#94a3b8;">${fls.length} flujo${fls.length!==1?'s':''}</span>
+      </div>
+      <div style="padding:12px 0 0 0;">${flujoRows}</div>
+    </div>`;
+  });
+
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Resumen Migrations Guard ${today}</title>
+  <style>body{font-family:Arial,sans-serif;color:#0f172a;margin:0;padding:24px;}@media print{body{padding:0;}}</style>
+  </head><body>
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:20px;padding-bottom:12px;border-bottom:2px solid #0f172a;">
+    <div>
+      <div style="font-size:20px;font-weight:800;color:#0f172a;">Migrations Guard AI</div>
+      <div style="font-size:12px;color:#64748b;">Resumen de estado · ${today}</div>
+    </div>
+    <div style="text-align:right;font-size:11px;color:#94a3b8;">Simetrik V1 → V2</div>
+  </div>
+  ${body}
+  </body></html>`;
+
+  const win=window.open('','_blank');
+  win.document.write(html);
+  win.document.close();
+  setTimeout(()=>win.print(),500);
+}
 function exportCSV(){
   const k=globalKPIs();
   let warn='';
