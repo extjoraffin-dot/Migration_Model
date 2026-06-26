@@ -96,6 +96,7 @@ input:disabled{opacity:0.4;cursor:not-allowed;}
     <select id="filtro-analista" onchange="renderAll()" style="width:auto;padding:6px 12px;font-size:13px;border-radius:8px;cursor:pointer;">
       <option value="">👤 Todos los analistas</option>
     </select>
+    <button class="btn btn-ghost" onclick="openMensajesModal()" style="border-color:rgba(251,191,36,0.3);color:#fbbf24;"><i class="fa-solid fa-envelope"></i> Mensajes</button>
     <button class="btn btn-purple" onclick="openNewFlujoModal()"><i class="fa-solid fa-plus"></i> Nuevo Flujo</button>
   </div>
 </header>
@@ -216,6 +217,21 @@ input:disabled{opacity:0.4;cursor:not-allowed;}
   <div style="padding:10px 12px;border-top:1px solid var(--border);display:flex;gap:8px;">
     <textarea id="chat-input" rows="2" placeholder="Actualizá un paso o creá un flujo en lenguaje natural..." style="flex:1;resize:none;font-size:12px;"></textarea>
     <button class="btn btn-green" style="align-self:flex-end;padding:6px 10px;" onclick="sendChat()"><i class="fa-solid fa-paper-plane"></i></button>
+  </div>
+</div>
+
+<!-- MODAL MENSAJES -->
+<div class="modal-overlay" id="modal-mensajes">
+  <div class="modal-box" style="max-width:620px;max-height:80vh;overflow-y:auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <h3 style="margin:0;font-size:15px;">Mensajes para copiar</h3>
+      <button class="btn btn-ghost" style="padding:4px 8px;" onclick="closeMensajesModal()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:16px;">
+      <button id="tab-analistas" class="btn btn-green" style="font-size:12px;" onclick="switchTab('analistas')">Para analistas</button>
+      <button id="tab-supervisoras" class="btn btn-ghost" style="font-size:12px;" onclick="switchTab('supervisoras')">Para supervisoras</button>
+    </div>
+    <div id="mensajes-content" style="display:flex;flex-direction:column;gap:12px;"></div>
   </div>
 </div>
 
@@ -791,6 +807,88 @@ function saveModelo(fid,mid){
 }
 
 // EXPORT / IMPORT
+const TOOL_URL='https://extjoraffin-dot.github.io/Migration_Model/';
+function openMensajesModal(){
+  document.getElementById('modal-mensajes').classList.add('open');
+  switchTab('analistas');
+}
+function closeMensajesModal(){document.getElementById('modal-mensajes').classList.remove('open');}
+document.addEventListener('DOMContentLoaded',()=>{
+  const mel=document.getElementById('modal-mensajes');
+  if(mel) mel.addEventListener('click',e=>{if(e.target===e.currentTarget)closeMensajesModal();});
+});
+function switchTab(tab){
+  document.getElementById('tab-analistas').className=tab==='analistas'?'btn btn-green':'btn btn-ghost';
+  document.getElementById('tab-supervisoras').className=tab==='supervisoras'?'btn btn-green':'btn btn-ghost';
+  document.getElementById('tab-analistas').style.fontSize='12px';
+  document.getElementById('tab-supervisoras').style.fontSize='12px';
+  const cont=document.getElementById('mensajes-content');
+  cont.innerHTML='';
+  const today=new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'});
+  if(tab==='analistas'){
+    const porAnalista={};
+    flujos.forEach(f=>{
+      const a=f.responsable||'—';
+      if(!porAnalista[a]) porAnalista[a]=[];
+      porAnalista[a].push(f);
+    });
+    Object.keys(porAnalista).sort().forEach(analista=>{
+      if(analista==='—') return;
+      const fls=porAnalista[analista];
+      let lineas=`Hola ${analista}! 👋\n\nTe paso el estado de tus flujos de migración al ${today}:\n\n`;
+      fls.forEach(f=>{
+        const fs=flujoStats(f);
+        lineas+=`📌 *${f.name}* — ${fs.pct}% completado\n`;
+        lineas+=`   Encendido: ${fmt(f.encendido)}\n`;
+        f.modelos.forEach(m=>{
+          const ms=modeloStats(m);
+          const st=ms.pct===100?'✅':ms.done>0?'🔄':'⏳';
+          lineas+=`   ${st} ${m.name}: ${ms.pct}%\n`;
+        });
+        lineas+='\n';
+      });
+      lineas+=`Podés actualizar el estado acá: ${TOOL_URL}`;
+      const div=document.createElement('div');
+      div.style.cssText='background:var(--bg-deep);border:1px solid var(--border);border-radius:8px;padding:12px;';
+      div.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <span style="font-size:12px;font-weight:600;color:var(--text);">👤 ${analista}</span>
+        <button class="btn btn-ghost" style="font-size:11px;padding:3px 10px;" onclick="navigator.clipboard.writeText(this.closest('div').querySelector('pre').textContent);showToast('✓ Copiado','green')">Copiar</button>
+      </div>
+      <pre style="font-size:11px;color:var(--text-dim);white-space:pre-wrap;margin:0;font-family:monospace;">${lineas}</pre>`;
+      cont.appendChild(div);
+    });
+  } else {
+    const k=globalKPIs();
+    const porAnalista={};
+    flujos.forEach(f=>{
+      const a=f.responsable||'—';
+      if(!porAnalista[a]) porAnalista[a]=[];
+      porAnalista[a].push(f);
+    });
+    let lineas=`📊 *Resumen Migrations Guard* — ${today}\n\n`;
+    lineas+=`Avance global: *${k.pct}%* · ${flujos.length} flujos activos\n`;
+    if(k.unjust>0) lineas+=`⚠️ ${k.unjust} desvío(s) sin justificar\n`;
+    lineas+='\n';
+    Object.keys(porAnalista).sort().forEach(analista=>{
+      const fls=porAnalista[analista];
+      lineas+=`👤 *${analista}*\n`;
+      fls.forEach(f=>{
+        const fs=flujoStats(f);
+        lineas+=`   • ${f.name}: ${fs.pct}% — Enc. ${fmt(f.encendido)}\n`;
+      });
+      lineas+='\n';
+    });
+    lineas+=`🔗 ${TOOL_URL}`;
+    const div=document.createElement('div');
+    div.style.cssText='background:var(--bg-deep);border:1px solid var(--border);border-radius:8px;padding:12px;';
+    div.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <span style="font-size:12px;font-weight:600;color:var(--text);">Resumen para supervisoras</span>
+      <button class="btn btn-ghost" style="font-size:11px;padding:3px 10px;" onclick="navigator.clipboard.writeText(this.closest('div').querySelector('pre').textContent);showToast('✓ Copiado','green')">Copiar</button>
+    </div>
+    <pre style="font-size:11px;color:var(--text-dim);white-space:pre-wrap;margin:0;font-family:monospace;">${lineas}</pre>`;
+    cont.appendChild(div);
+  }
+}
 function exportResumenPDF(){
   const today=new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'});
   // Agrupar flujos por analista
