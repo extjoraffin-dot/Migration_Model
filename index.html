@@ -91,10 +91,7 @@ input:disabled{opacity:0.4;cursor:not-allowed;}
       <i class="fa-solid fa-triangle-exclamation" style="font-size:11px;"></i>
       <span id="alert-count">—</span>
     </div>
-    <button class="btn btn-ghost" onclick="document.getElementById('csv-upload').click()"><i class="fa-solid fa-file-import"></i> Importar CSV</button>
     <input type="file" id="csv-upload" accept=".csv" style="display:none" onchange="importCSV(this)">
-    <button class="btn btn-ghost" onclick="downloadTemplate()"><i class="fa-solid fa-file-arrow-down"></i> Plantilla</button>
-    <button class="btn btn-green" onclick="exportCSV()"><i class="fa-solid fa-file-export"></i> Exportar CSV</button>
     <button class="btn btn-ghost" onclick="exportResumenPDF()" style="border-color:rgba(139,92,246,0.3);color:var(--purple);"><i class="fa-solid fa-file-arrow-down"></i> Resumen PDF</button>
     <select id="filtro-analista" onchange="renderAll()" style="width:auto;padding:6px 12px;font-size:13px;border-radius:8px;cursor:pointer;">
       <option value="">👤 Todos los analistas</option>
@@ -1263,7 +1260,7 @@ const MASTER_ACTIVIDADES={
   documentacion:['Documentación del flujo'],
   encendido:['Validación de fuentes','Encendido de TC','Estabilización','Traspaso','Mail de traspaso','OK mail de traspaso'],
 };
-const MASTER_NOMBRES={validacion:'Validación',serial:'Serialización',m10:'M10',m10_mdc:'M10',m2070:'M20/70',bancos_mdc:'Bancos MDC',m20_mdc:'M20 MDC',m50:'M50',costs_tch:'Costs TCH',costs_calc:'Costs Calc',tableros:'Tableros',so_final_bt:'SO Final',so_final_mdc:'SO Final',documentacion:'Documentación',encendido:'Encendido'};
+const MASTER_NOMBRES={validacion:'Validación de fuentes',serial:'Serialización',m10:'M10',m10_mdc:'M10',m2070:'M20/70',bancos_mdc:'Bancos MDC',m20_mdc:'M20 MDC',m50:'M50',costs_tch:'Control de Costos (TCH)',costs_calc:'Control de Costos (Calc)',tableros:'Tableros',so_final_bt:'SO Final',so_final_mdc:'SO Final',documentacion:'Documentación',encendido:'Encendido'};
 const BT_MODELOS=['validacion','serial','m10','m2070','m50','tableros','so_final_bt','documentacion','encendido'];
 const MDC_MODELOS=['validacion','bancos_mdc','m10_mdc','m20_mdc','m50','costs_tch','costs_calc','tableros','so_final_mdc','documentacion','encendido'];
 
