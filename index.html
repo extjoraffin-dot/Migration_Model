@@ -1426,7 +1426,9 @@ function logChange(flujo,modelo,actividad,field,from,to,via='tabla'){
   saveState();
 }
 
-loadState();
+localStorage.removeItem('mg_flujos');
+localStorage.removeItem('mg_log');
+flujos=[];changeLog=[];
 renderAll();
 </script>
 <style>@keyframes fadeInUp{from{opacity:0;transform:translateY(8px) translateX(-50%)}to{opacity:1;transform:translateY(0) translateX(-50%)}}</style>
