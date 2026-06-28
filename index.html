@@ -474,7 +474,11 @@ function renderFlujos(){
             </div>
             <div style="font-size:11px;color:var(--text-muted);margin-top:2px;display:flex;align-items:center;gap:6px;">
               Encendido: ${fmt(f.encendido)}
-              ${f.responsable&&f.responsable!=='—'?`<span style="display:inline-flex;align-items:center;gap:3px;padding:1px 7px;border-radius:99px;font-size:10px;font-weight:600;background:${ANALISTA_BG[f.responsable]||'rgba(100,116,139,0.1)'};color:${ANALISTA_COLORS[f.responsable]||'var(--text-muted)'};">${f.responsable}</span>`:''}
+              <select onchange="updateFlujoResponsable('${f.id}',this.value)"
+                style="font-size:10px;background:transparent;border:1px dashed var(--border);border-radius:99px;padding:1px 6px;color:${ANALISTA_COLORS[f.responsable]||'var(--text-muted)'};cursor:pointer;">
+                <option value="—" ${(!f.responsable||f.responsable==='—')?'selected':''}>Sin responsable</option>
+                ${ANALISTAS.filter(a=>a!=='—').map(a=>`<option value="${a}" ${f.responsable===a?'selected':''}>${a}</option>`).join('')}
+              </select>
             </div>
           </div>
         </div>
@@ -751,6 +755,20 @@ function addActividadManual(fid,mid){
   renderActRows(f,m);
   renderKPIs();renderFlujos();
   showToast(`✓ Actividad "${name}" agregada a ${m.name}`,'green');
+}
+function updateFlujoResponsable(fid,newResp){
+  const f=flujos.find(x=>x.id===fid);
+  if(!f) return;
+  const prev=f.responsable;
+  f.responsable=newResp;
+  // Actualizar actividades que no tienen responsable asignado
+  f.modelos.forEach(m=>m.actividades.forEach(a=>{
+    if(!a.responsable||a.responsable==='—') a.responsable=newResp;
+  }));
+  const fakeM={name:'—'};const fakeA={name:'Responsable del flujo'};
+  if(prev!==newResp) logChange(f,fakeM,fakeA,'responsable',prev,newResp,'tabla');
+  saveState();
+  renderAll();
 }
 function updateFlujoNombre(fid,newName){
   const f=flujos.find(x=>x.id===fid);
