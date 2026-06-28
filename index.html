@@ -477,10 +477,10 @@ function renderFlujos(){
         <td style="padding:10px;text-align:center;font-size:12px;color:var(--text-dim);">${fmt(f.encendido)}</td>
       `:`
         <td style="padding:12px;text-align:center;min-width:130px;">
-          <div style="font-size:13px;font-weight:600;margin-bottom:4px;">${s.pct}%</div>
+          <div class="pct-num" style="font-size:13px;font-weight:600;margin-bottom:4px;">${s.pct}%</div>
           <div class="progress-bar"><div class="progress-fill" style="width:${s.pct}%;background:var(--blue);"></div></div>
         </td>
-        <td style="padding:12px;text-align:center;font-size:13px;color:var(--text-dim);">${mDone}/${f.modelos.length}</td>
+        <td style="padding:12px;text-align:center;font-size:13px;color:var(--text-dim);"><span class="m-done">${mDone}/${f.modelos.length}</span></td>
         <td style="padding:12px;text-align:center;">${s.avgDev>0?`<span style="color:var(--yellow);font-weight:600;font-size:13px;">+${s.avgDev}d</span>`:`<span style="color:var(--green);font-size:13px;">0d</span>`}</td>
         <td style="padding:12px;text-align:center;">${stBadge}</td>
       `}
@@ -775,7 +775,21 @@ function updateAct(fid,mid,aid,field,value){
   if(prev!==value) logChange(f,m,act,field,prev,value,'tabla');
   renderActRows(f,m);
   populateModelosInline(f);
-  renderKPIs();renderFlujos();
+  renderKPIs();
+  updateFlujoRowInline(f);
+}
+function updateFlujoRowInline(f){
+  const s=flujoStats(f);
+  const tr=document.querySelector(`tr[data-flujo="${f.id}"]`);
+  if(!tr) return;
+  // Actualizar barra de progreso y % en la fila sin redibujar
+  const pctEl=tr.querySelector('.progress-fill');
+  const pctNum=tr.querySelector('.pct-num');
+  const mDoneEl=tr.querySelector('.m-done');
+  if(pctEl) pctEl.style.width=s.pct+'%';
+  if(pctNum) pctNum.textContent=s.pct+'%';
+  const mDone=f.modelos.filter(m=>modeloStats(m).pct===100).length;
+  if(mDoneEl) mDoneEl.textContent=`${mDone}/${f.modelos.length}`;
 }
 function saveModelo(fid,mid){
   const f=flujos.find(x=>x.id===fid);
