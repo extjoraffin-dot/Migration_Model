@@ -463,7 +463,15 @@ function renderFlujos(){
             <i class="fa-solid ${s.pct===100?'fa-check':f.icon}" style="font-size:${isCompact?'11':'12'}px;color:${s.pct===100?'var(--green)':'var(--text-dim)'};"></i>
           </div>
           <div>
-            <div style="font-size:13px;font-weight:${isCompact?'500':'600'};">${f.name}${f.reconId?` <span style="font-size:10px;font-weight:500;color:var(--text-muted);background:rgba(100,116,139,0.1);border:1px solid var(--border-light);padding:1px 6px;border-radius:4px;">${f.reconId}</span>`:''}</div>
+            <div style="font-size:13px;font-weight:${isCompact?'500':'600'};display:flex;align-items:center;gap:6px;">
+              <span contenteditable="true" spellcheck="false"
+                onblur="updateFlujoNombre('${f.id}',this.textContent.trim())"
+                onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}"
+                style="outline:none;border-bottom:1px dashed transparent;cursor:text;"
+                onmouseover="this.style.borderBottomColor='var(--border)'"
+                onmouseout="this.style.borderBottomColor='transparent'">${f.name}</span>
+              ${f.reconId?`<span style="font-size:10px;font-weight:500;color:var(--text-muted);background:rgba(100,116,139,0.1);border:1px solid var(--border-light);padding:1px 6px;border-radius:4px;">${f.reconId}</span>`:''}
+            </div>
             <div style="font-size:11px;color:var(--text-muted);margin-top:2px;display:flex;align-items:center;gap:6px;">
               Encendido: ${fmt(f.encendido)}
               ${f.responsable&&f.responsable!=='—'?`<span style="display:inline-flex;align-items:center;gap:3px;padding:1px 7px;border-radius:99px;font-size:10px;font-weight:600;background:${ANALISTA_BG[f.responsable]||'rgba(100,116,139,0.1)'};color:${ANALISTA_COLORS[f.responsable]||'var(--text-muted)'};">${f.responsable}</span>`:''}
@@ -741,6 +749,16 @@ function addActividadManual(fid,mid){
   renderActRows(f,m);
   renderKPIs();renderFlujos();
   showToast(`✓ Actividad "${name}" agregada a ${m.name}`,'green');
+}
+function updateFlujoNombre(fid,newName){
+  const f=flujos.find(x=>x.id===fid);
+  if(!f||!newName||newName===f.name) return;
+  const prev=f.name;
+  f.name=newName;
+  const fakeM={name:'—'};const fakeA={name:'Nombre del flujo'};
+  logChange(f,fakeM,fakeA,'nombre',prev,newName,'tabla');
+  saveState();
+  renderKPIs();
 }
 function updateFlujoEncendido(fid,newDate,motivo){
   const f=flujos.find(x=>x.id===fid);
