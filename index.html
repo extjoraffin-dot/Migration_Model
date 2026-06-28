@@ -334,7 +334,7 @@ function modeloStats(modelo){
   const pct=total>0?Math.round(done/total*100):0;
   const devs=acts.map(a=>getDeviation(a)).filter(d=>d!==null&&d>0);
   const avgDev=devs.length?Math.round(devs.reduce((a,b)=>a+b,0)/devs.length):0;
-  const unjust=acts.filter(a=>{const d=getDeviation(a);return d!==null&&d>0&&(!a.justify||a.justify.length<10);}).length;
+  const unjust=acts.filter(a=>{const d=getDeviation(a);return d!==null&&d>0&&(!a.justify);}).length;
   return{total,done,pct,avgDev,unjust};
 }
 function flujoStats(flujo){
@@ -1226,7 +1226,7 @@ function parseNL(text){
     let res='<b>Desvíos sin justificar:</b><br>';let found=false;
     flujos.forEach(f=>f.modelos.forEach(m=>m.actividades.forEach(a=>{
       const d=getDeviation(a);
-      if(d!==null&&d>0&&(!a.justify||a.justify.length<10)){
+      if(d!==null&&d>0&&(!a.justify)){
         res+=`• ${f.name} → ${m.name} → <b>${a.name}</b>: <span style="color:var(--red);">+${d}d</span><br>`;found=true;
       }
     })));
