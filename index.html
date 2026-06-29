@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Migrations Guard AI</title>
+<title>Migration Tracker</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
@@ -82,8 +82,7 @@ input:disabled{opacity:0.4;cursor:not-allowed;}
       <i class="fa-solid fa-shield-halved" style="color:var(--green);font-size:14px;"></i>
     </div>
     <div>
-      <div style="font-size:15px;font-weight:700;letter-spacing:-0.02em;">Migrations Guard <span style="color:var(--green);">AI</span></div>
-      <div style="font-size:11px;color:var(--text-muted);">Simetrik V1 → V2 · Conciliation Audit</div>
+      <div style="font-size:15px;font-weight:700;letter-spacing:-0.02em;">Migration Tracker <span style="color:var(--green);">AI</span></div>
     </div>
   </div>
   <div style="display:flex;align-items:center;gap:8px;">
@@ -896,7 +895,7 @@ function switchTab(tab){
       if(!porAnalista[a]) porAnalista[a]=[];
       porAnalista[a].push(f);
     });
-    let lineas=`📊 *Resumen Migrations Guard* — ${today}\n\n`;
+    let lineas=`📊 *Resumen Migration Tracker* — ${today}\n\n`;
     lineas+=`Avance global: *${k.pct}%* · ${flujos.length} flujos activos\n`;
     if(k.unjust>0) lineas+=`⚠️ ${k.unjust} desvío(s) sin justificar\n`;
     lineas+='\n';
@@ -980,15 +979,15 @@ function exportResumenPDF(){
   });
 
   const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
-  <title>Resumen Migrations Guard ${today}</title>
+  <title>Resumen Migration Tracker ${today}</title>
   <style>body{font-family:Arial,sans-serif;color:#0f172a;margin:0;padding:24px;}@media print{body{padding:0;}}</style>
   </head><body>
   <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:20px;padding-bottom:12px;border-bottom:2px solid #0f172a;">
     <div>
-      <div style="font-size:20px;font-weight:800;color:#0f172a;">Migrations Guard AI</div>
+      <div style="font-size:20px;font-weight:800;color:#0f172a;">Migration Tracker</div>
       <div style="font-size:12px;color:#64748b;">Resumen de estado · ${today}</div>
     </div>
-    <div style="text-align:right;font-size:11px;color:#94a3b8;">Simetrik V1 → V2</div>
+    <div style="text-align:right;font-size:11px;color:#94a3b8;"></div>
   </div>
   ${body}
   </body></html>`;
